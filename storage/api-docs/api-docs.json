@@ -1,0 +1,1813 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API SenAgri B2B",
+        "description": "Documentation officielle de l'API SenAgri B2B",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/api",
+            "description": "Serveur local"
+        }
+    ],
+    "paths": {
+        "/audit-logs": {
+            "get": {
+                "tags": [
+                    "Audit Logs"
+                ],
+                "summary": "Lister les journaux d'audit",
+                "description": "Retourne la liste paginée de tous les journaux d'audit.",
+                "operationId": "getAuditLogs",
+                "responses": {
+                    "200": {
+                        "description": "Liste des journaux récupérée avec succès"
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    },
+                    "403": {
+                        "description": "Accès interdit"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/audit-logs/{id}": {
+            "get": {
+                "tags": [
+                    "Audit Logs"
+                ],
+                "summary": "Afficher un journal d'audit",
+                "description": "Retourne les informations d'un journal d'audit précis.",
+                "operationId": "showAuditLog",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant du journal d'audit",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Journal récupéré avec succès"
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    },
+                    "404": {
+                        "description": "Journal introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/register": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Créer un compte utilisateur",
+                "description": "Permet de créer un nouveau compte utilisateur.",
+                "operationId": "registerUser",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nom",
+                                    "email",
+                                    "password",
+                                    "password_confirmation",
+                                    "telephone",
+                                    "adresse",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "nom": {
+                                        "type": "string",
+                                        "example": "Abraham Torero"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "abraham@gmail.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "password"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "771234567"
+                                    },
+                                    "adresse": {
+                                        "type": "string",
+                                        "example": "Dakar"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "vendeur"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Utilisateur créé avec succès"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Connexion utilisateur",
+                "operationId": "67d6d0fdd54fba132e1b6f55ca254183",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "abraham@gmail.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Déconnexion",
+                "operationId": "logoutUser",
+                "responses": {
+                    "200": {
+                        "description": "Déconnexion réussie"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/categories": {
+            "get": {
+                "tags": [
+                    "Catégories"
+                ],
+                "summary": "Lister les catégories",
+                "description": "Retourne la liste de toutes les catégories disponibles.",
+                "operationId": "listeCategories",
+                "responses": {
+                    "200": {
+                        "description": "Liste récupérée avec succès."
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Catégories"
+                ],
+                "summary": "Créer une catégorie",
+                "description": "Permet de créer une nouvelle catégorie.",
+                "operationId": "creerCategorie",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nom"
+                                ],
+                                "properties": {
+                                    "nom": {
+                                        "type": "string",
+                                        "example": "Fruits"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Catégorie créée avec succès."
+                    },
+                    "422": {
+                        "description": "Erreur de validation."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Catégories"
+                ],
+                "summary": "Afficher une catégorie",
+                "description": "Retourne les informations d'une catégorie.",
+                "operationId": "detailCategorie",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de la catégorie",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Catégorie trouvée."
+                    },
+                    "404": {
+                        "description": "Catégorie introuvable."
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Catégories"
+                ],
+                "summary": "Modifier une catégorie",
+                "description": "Met à jour une catégorie existante.",
+                "operationId": "modifierCategorie",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de la catégorie",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nom": {
+                                        "type": "string",
+                                        "example": "Légumes"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Catégorie modifiée."
+                    },
+                    "404": {
+                        "description": "Catégorie introuvable."
+                    },
+                    "422": {
+                        "description": "Erreur de validation."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Catégories"
+                ],
+                "summary": "Supprimer une catégorie",
+                "description": "Supprime une catégorie si elle ne possède aucune offre.",
+                "operationId": "supprimerCategorie",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de la catégorie",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Catégorie supprimée."
+                    },
+                    "404": {
+                        "description": "Catégorie introuvable."
+                    },
+                    "409": {
+                        "description": "La catégorie contient encore des offres."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/commandes": {
+            "get": {
+                "tags": [
+                    "Commandes"
+                ],
+                "summary": "Lister les commandes",
+                "operationId": "63413d0f1ac9da2056a385b55f791e37",
+                "responses": {
+                    "200": {
+                        "description": "Liste des commandes"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Commandes"
+                ],
+                "summary": "Créer une commande",
+                "operationId": "5d962071e01ba227e33a4b0122eaeced",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "offre_id",
+                                    "quantite"
+                                ],
+                                "properties": {
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "quantite": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Commande créée avec succès"
+                    },
+                    "403": {
+                        "description": "Impossible de commander sa propre offre"
+                    },
+                    "422": {
+                        "description": "Offre indisponible ou stock insuffisant"
+                    },
+                    "500": {
+                        "description": "Erreur serveur"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/commandes/{id}": {
+            "get": {
+                "tags": [
+                    "Commandes"
+                ],
+                "summary": "Afficher une commande",
+                "operationId": "387ffac66f5018f15c418bc864327bfc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de la commande",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commande trouvée"
+                    },
+                    "404": {
+                        "description": "Commande introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Commandes"
+                ],
+                "summary": "Modifier le statut d'une commande",
+                "operationId": "4bfe75d25e7159c22ea4d21f46b32d7a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de la commande",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "statut"
+                                ],
+                                "properties": {
+                                    "statut": {
+                                        "type": "string",
+                                        "example": "confirmee"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Commande mise à jour"
+                    },
+                    "404": {
+                        "description": "Commande introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Commandes"
+                ],
+                "summary": "Supprimer une commande",
+                "operationId": "bb024d05486cc9cc40b761a34137a04d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de la commande",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Commande supprimée"
+                    },
+                    "404": {
+                        "description": "Commande introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Afficher le tableau de bord du vendeur",
+                "description": "Retourne les statistiques du vendeur connecté ainsi que les cinq dernières commandes concernant ses offres.",
+                "operationId": "faae45987996934eda46ad27a6f61dea",
+                "responses": {
+                    "200": {
+                        "description": "Tableau de bord récupéré avec succès"
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/offres/{offre}/images": {
+            "post": {
+                "tags": [
+                    "Images Produits"
+                ],
+                "summary": "Ajouter une image à une offre",
+                "description": "Permet d'ajouter une image à une offre. Une offre ne peut contenir que trois images.",
+                "operationId": "95f4b5d0033592d21a2910ef5cf426fc",
+                "parameters": [
+                    {
+                        "name": "offre",
+                        "in": "path",
+                        "description": "Identifiant de l'offre",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "image",
+                                    "ordre_affichage"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "description": "Image à envoyer",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "ordre_affichage": {
+                                        "description": "Ordre d'affichage de l'image",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Image ajoutée avec succès"
+                    },
+                    "422": {
+                        "description": "Limite de trois images atteinte ou données invalides"
+                    },
+                    "404": {
+                        "description": "Offre introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/images-produits/{id}": {
+            "delete": {
+                "tags": [
+                    "Images Produits"
+                ],
+                "summary": "Supprimer une image",
+                "description": "Supprime une image d'une offre ainsi que son fichier sur le serveur.",
+                "operationId": "8c0f4f2d969244b0c5497db4c4d76416",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de l'image",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Image supprimée avec succès"
+                    },
+                    "404": {
+                        "description": "Image introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/messages": {
+            "get": {
+                "tags": [
+                    "Messagerie"
+                ],
+                "summary": "Lister les conversations",
+                "description": "Retourne les conversations de l'utilisateur connecté.",
+                "operationId": "10788780023ff70f05958accb63231df",
+                "responses": {
+                    "200": {
+                        "description": "Liste des conversations récupérée."
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Messagerie"
+                ],
+                "summary": "Envoyer un message",
+                "description": "Permet à l'utilisateur connecté d'envoyer un message à un autre utilisateur.",
+                "operationId": "1aa21572307a1c2e85281f5e04599031",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "destinataire_id",
+                                    "contenu"
+                                ],
+                                "properties": {
+                                    "destinataire_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 12,
+                                        "nullable": true
+                                    },
+                                    "contenu": {
+                                        "type": "string",
+                                        "example": "Bonjour, votre produit est-il toujours disponible ?"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Message envoyé avec succès."
+                    },
+                    "422": {
+                        "description": "Données invalides."
+                    },
+                    "403": {
+                        "description": "Impossible de s'envoyer un message à soi-même."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/messages/{user}": {
+            "get": {
+                "tags": [
+                    "Messagerie"
+                ],
+                "summary": "Afficher une conversation",
+                "description": "Retourne tous les messages échangés entre l'utilisateur connecté et un autre utilisateur.",
+                "operationId": "7c86b3281b1bab7dbc812ba3270321ae",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "Identifiant de l'utilisateur",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Conversation récupérée avec succès."
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié."
+                    },
+                    "404": {
+                        "description": "Utilisateur introuvable."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/messages/{user}/read": {
+            "put": {
+                "tags": [
+                    "Messagerie"
+                ],
+                "summary": "Marquer une conversation comme lue",
+                "description": "Marque tous les messages reçus d'un utilisateur comme lus.",
+                "operationId": "0f945dab0880912d1f47e161882a32d8",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "Identifiant de l'utilisateur",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Messages marqués comme lus."
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Lister les notifications",
+                "description": "Retourne la liste paginée des notifications de l'utilisateur connecté.",
+                "operationId": "b1274a2aaae8a4295a7e1925e8d8090f",
+                "responses": {
+                    "200": {
+                        "description": "Liste des notifications récupérée avec succès"
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/notifications/{id}/read": {
+            "patch": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Marquer une notification comme lue",
+                "description": "Marque une notification spécifique comme lue.",
+                "operationId": "899ce5d600096bfad5311943b9c40095",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Identifiant de la notification",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification marquée comme lue"
+                    },
+                    "404": {
+                        "description": "Notification introuvable"
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/notifications/read-all": {
+            "patch": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Marquer toutes les notifications comme lues",
+                "description": "Marque toutes les notifications non lues de l'utilisateur connecté comme lues.",
+                "operationId": "642ad50922aee94ba5b8cd489c71ae0a",
+                "responses": {
+                    "200": {
+                        "description": "Toutes les notifications ont été marquées comme lues"
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/offres": {
+            "get": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Lister les offres",
+                "operationId": "05bfdbaa2b1418bc0055ac118ad7bceb",
+                "parameters": [
+                    {
+                        "name": "nom",
+                        "in": "query",
+                        "description": "Recherche par nom",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "categorie_id",
+                        "in": "query",
+                        "description": "Filtrer par catégorie",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "prix_min",
+                        "in": "query",
+                        "description": "Prix minimum",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "prix_max",
+                        "in": "query",
+                        "description": "Prix maximum",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "disponible",
+                        "in": "query",
+                        "description": "Disponibilité",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "tri",
+                        "in": "query",
+                        "description": "Tri (prix_asc, prix_desc, ancien, nom)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des offres"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Créer une offre",
+                "operationId": "53929be4637f259e9861ff550a140019",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "categorie_id",
+                                    "nom",
+                                    "description",
+                                    "prix_unitaire",
+                                    "quantite_disponible",
+                                    "unite"
+                                ],
+                                "properties": {
+                                    "categorie_id": {
+                                        "type": "integer"
+                                    },
+                                    "nom": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "prix_unitaire": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "quantite_disponible": {
+                                        "type": "integer"
+                                    },
+                                    "unite": {
+                                        "type": "string"
+                                    },
+                                    "est_disponible": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Offre créée avec succès"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/offres/{id}": {
+            "get": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Afficher une offre",
+                "operationId": "aa918bd8526044eeffcb7c8f6944bfd2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détail d'une offre"
+                    },
+                    "404": {
+                        "description": "Offre introuvable"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Modifier une offre",
+                "operationId": "34b83097859cea2fca183a26d0233e0b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "categorie_id": {
+                                        "type": "integer"
+                                    },
+                                    "nom": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "prix_unitaire": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "quantite_disponible": {
+                                        "type": "integer"
+                                    },
+                                    "unite": {
+                                        "type": "string"
+                                    },
+                                    "est_disponible": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Offre mise à jour"
+                    },
+                    "404": {
+                        "description": "Offre introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Supprimer une offre",
+                "operationId": "31370150957657a8670d33b9bf9fd5c2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Offre supprimée"
+                    },
+                    "404": {
+                        "description": "Offre introuvable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/profile": {
+            "get": {
+                "tags": [
+                    "Profil"
+                ],
+                "summary": "Afficher le profil connecté",
+                "description": "Retourne les informations du profil de l'utilisateur authentifié.",
+                "operationId": "274fbc07758eb418369dc165a7863185",
+                "responses": {
+                    "200": {
+                        "description": "Profil récupéré avec succès"
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Profil"
+                ],
+                "summary": "Modifier le profil",
+                "description": "Met à jour les informations du profil de l'utilisateur connecté.",
+                "operationId": "74599296b1816be41ad4228975229966",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nom": {
+                                        "type": "string",
+                                        "example": "Mamadou Diallo"
+                                    },
+                                    "telephone": {
+                                        "type": "string",
+                                        "example": "771234567"
+                                    },
+                                    "adresse": {
+                                        "type": "string",
+                                        "example": "Dakar"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profil mis à jour avec succès"
+                    },
+                    "422": {
+                        "description": "Données invalides"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/profile/photo": {
+            "post": {
+                "tags": [
+                    "Profil"
+                ],
+                "summary": "Ajouter ou remplacer la photo de profil",
+                "description": "Téléverse une nouvelle photo de profil. Si une photo existe déjà, elle est remplacée.",
+                "operationId": "5269dbd7d76c309dec93bb67ffd11b94",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "photo"
+                                ],
+                                "properties": {
+                                    "photo": {
+                                        "description": "Fichier image",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Photo enregistrée avec succès"
+                    },
+                    "422": {
+                        "description": "Fichier invalide"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Profil"
+                ],
+                "summary": "Supprimer la photo de profil",
+                "description": "Supprime la photo de profil de l'utilisateur connecté.",
+                "operationId": "1d4c0e08394c6007d5e9e2156b6e19d3",
+                "responses": {
+                    "200": {
+                        "description": "Photo supprimée avec succès"
+                    },
+                    "404": {
+                        "description": "Aucune photo de profil"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/statistiques": {
+            "get": {
+                "tags": [
+                    "Statistiques"
+                ],
+                "summary": "Statistiques générales",
+                "description": "Retourne les principales statistiques de la plateforme SenAgri B2B.",
+                "operationId": "e2750fe588da6022b2d2c35be3763a0f",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "utilisateurs": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "vendeurs": {
+                                            "type": "integer",
+                                            "example": 8
+                                        },
+                                        "offres": {
+                                            "type": "integer",
+                                            "example": 56
+                                        },
+                                        "offres_disponibles": {
+                                            "type": "integer",
+                                            "example": 40
+                                        },
+                                        "categories": {
+                                            "type": "integer",
+                                            "example": 6
+                                        },
+                                        "commandes": {
+                                            "type": "integer",
+                                            "example": 72
+                                        },
+                                        "chiffre_affaires": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 985000
+                                        },
+                                        "quantite_vendue": {
+                                            "type": "integer",
+                                            "example": 350
+                                        },
+                                        "produits_plus_vendus": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "offre_id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "total_vendu": {
+                                                        "type": "integer",
+                                                        "example": 95
+                                                    },
+                                                    "offre": {
+                                                        "$ref": "#/components/schemas/Offre"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "ventes_par_mois": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "mois": {
+                                                        "type": "integer",
+                                                        "example": 7
+                                                    },
+                                                    "chiffre_affaires": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 250000
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AuditLog": {
+                "title": "AuditLog",
+                "description": "Journal des actions effectuées par les utilisateurs",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "action": {
+                        "type": "string",
+                        "example": "Création"
+                    },
+                    "table_concernee": {
+                        "type": "string",
+                        "example": "offres"
+                    },
+                    "enregistrement_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "anciennes_valeurs": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "nouvelles_valeurs": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "date_action": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-02T15:30:00Z"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "Categorie": {
+                "title": "Categorie",
+                "description": "Modèle représentant une catégorie de produits",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Céréales"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Catégorie regroupant les céréales"
+                    },
+                    "est_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Commande": {
+                "title": "Commande",
+                "description": "Modèle représentant une commande passée par un acheteur",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "offre_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "quantite": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "prix_total": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 15000
+                    },
+                    "statut": {
+                        "type": "string",
+                        "example": "en_attente"
+                    },
+                    "date_commande": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-02T14:30:00Z"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "offre": {
+                        "$ref": "#/components/schemas/Offre"
+                    },
+                    "acheteur": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "ImageProduit": {
+                "title": "ImageProduit",
+                "description": "Modèle représentant une image associée à une offre",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "offre_id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "chemin_fichier": {
+                        "type": "string",
+                        "example": "offres/riz_01.jpg"
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "http://127.0.0.1:8000/storage/offres/riz_01.jpg"
+                    },
+                    "ordre_affichage": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "date_upload": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-02T14:30:00Z"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "offre": {
+                        "$ref": "#/components/schemas/Offre"
+                    }
+                },
+                "type": "object"
+            },
+            "Message": {
+                "title": "Message",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "contenu": {
+                        "type": "string"
+                    },
+                    "lu": {
+                        "type": "boolean"
+                    },
+                    "date_envoi": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "expediteur": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "destinataire": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "offre": {
+                        "$ref": "#/components/schemas/Offre"
+                    }
+                },
+                "type": "object"
+            },
+            "Offre": {
+                "title": "Offre",
+                "description": "Modèle représentant une offre publiée par un vendeur",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "categorie_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Riz parfumé"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Sac de riz parfumé de 50 kg"
+                    },
+                    "prix_unitaire": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 18000
+                    },
+                    "quantite_disponible": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "unite": {
+                        "type": "string",
+                        "example": "Sac"
+                    },
+                    "est_disponible": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "date_publication": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-08-02T14:30:00Z"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "vendeur": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "categorie": {
+                        "$ref": "#/components/schemas/Categorie"
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ImageProduit"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "PhotoProfil": {
+                "title": "PhotoProfil",
+                "description": "Modèle représentant la photo de profil d'un utilisateur",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "nom_fichier": {
+                        "type": "string",
+                        "example": "profil.jpg"
+                    },
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "http://127.0.0.1:8000/storage/profils/profil.jpg"
+                    },
+                    "type_mime": {
+                        "type": "string",
+                        "example": "image/jpeg"
+                    },
+                    "taille": {
+                        "description": "Taille du fichier en octets",
+                        "type": "integer",
+                        "example": 254780
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "title": "Utilisateur",
+                "description": "Modèle représentant un utilisateur de la plateforme SenAgri B2B",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Mamadou Diallo"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "mamadou@gmail.com"
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "example": "771234567"
+                    },
+                    "adresse": {
+                        "type": "string",
+                        "example": "Dakar"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "vendeur"
+                    },
+                    "est_actif": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "email_verified_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format (Bearer <token>)",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Audit Logs",
+            "description": "Gestion et consultation des journaux d'audit"
+        },
+        {
+            "name": "Catégories",
+            "description": "Gestion des catégories de produits"
+        },
+        {
+            "name": "Commandes",
+            "description": "Gestion des commandes"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Tableau de bord du vendeur"
+        },
+        {
+            "name": "Images Produits",
+            "description": "Gestion des images des offres"
+        },
+        {
+            "name": "Messagerie",
+            "description": "Messagerie entre acheteurs et vendeurs"
+        },
+        {
+            "name": "Notifications",
+            "description": "Gestion des notifications des utilisateurs"
+        },
+        {
+            "name": "Offres",
+            "description": "Gestion des offres de produits agricoles"
+        },
+        {
+            "name": "Profil",
+            "description": "Gestion du profil utilisateur"
+        },
+        {
+            "name": "Statistiques",
+            "description": "Statistiques générales de la plateforme SenAgri B2B"
+        },
+        {
+            "name": "Authentification",
+            "description": "Authentification"
+        }
+    ]
+}
