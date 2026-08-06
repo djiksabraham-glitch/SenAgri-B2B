@@ -1661,6 +1661,52 @@
                 },
                 "type": "object"
             },
+            "Paiement": {
+                "title": "Paiement",
+                "description": "Paiement effectué pour une commande",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "transaction_id": {
+                        "type": "string",
+                        "example": "TRX-123456789",
+                        "nullable": true
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "PAY-20260805-0001"
+                    },
+                    "montant": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 25000
+                    },
+                    "devise": {
+                        "type": "string",
+                        "example": "XOF"
+                    },
+                    "methode": {
+                        "type": "string",
+                        "example": "wave",
+                        "nullable": true
+                    },
+                    "statut": {
+                        "type": "string",
+                        "example": "en_attente"
+                    },
+                    "date_paiement": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "commande": {
+                        "$ref": "#/components/schemas/Commande"
+                    }
+                },
+                "type": "object"
+            },
             "PhotoProfil": {
                 "title": "PhotoProfil",
                 "description": "Modèle représentant la photo de profil d'un utilisateur",

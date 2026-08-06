@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OpenApi\Attributes as OA;
+
 
 #[OA\Schema(
     schema: "Commande",
@@ -117,4 +119,13 @@ class Commande extends Model
     {
         return $this->offre->vendeur();
     }
+
+    /**
+ * Paiement associé à la commande.
+ */
+public function paiement(): HasOne
+{
+    return $this->hasOne(Paiement::class);
+}
+
 }
