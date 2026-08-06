@@ -14,13 +14,19 @@ use App\Http\Controllers\Api\StatistiqueController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\FactureController;
+use App\Http\Controllers\Api\PaiementController;
 
+Route::post(
+    'paiement/callback',
+    [PaiementController::class, 'callback']
+);
 
 Route::prefix('auth')->group(function () {
 
     Route::post('/register', [AuthController::class, 'register']);
 
     Route::post('/login', [AuthController::class, 'login']);
+
 
 });
 
@@ -115,6 +121,8 @@ Route::middleware(['auth:sanctum', 'vendeur'])->group(function () {
 Route::middleware(['auth:sanctum', 'acheteur'])->group(function () {
 
     Route::post('/commandes', [CommandeController::class, 'store']);
+
+    Route::post('/paiements/{commande}', [PaiementController::class, 'payer']);
 
 });
 
