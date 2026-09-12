@@ -359,6 +359,12 @@ class CommandeController extends Controller
  */
 public function facture(Commande $commande)
 {
+    if ($commande->statut !== 'payee' && !$commande->est_payee) {
+        return response()->json([
+            'message' => 'La facture n\'est pas encore disponible car la commande n\'est pas payée.'
+        ], 403);
+    }
+
     $commande->load([
         'offre',
         'offre.vendeur',

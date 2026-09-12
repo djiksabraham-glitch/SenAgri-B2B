@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/home/Navbar";
 import { useAuth } from "../../hooks/useAuth";
 import { getOffres, getCategories } from "../../services/offreService";
-import { getMesCommandes, creerCommande, downloadFacture } from "../../services/commandeService";
+import { getMesCommandes, creerCommande, downloadFacture, updateStatutCommande } from "../../services/commandeService";
 import { payerCommande } from "../../services/paiementService";
 import {
     FaShoppingBag, FaClock, FaCheckCircle, FaSearch,
@@ -46,6 +46,20 @@ export default function AcheteurDashboard() {
             setTimeout(() => setErreurPaiement(null), 4000);
         } finally {
             setDownloadingPdfId(null);
+        }
+    };
+
+    const handleUpdateStatut = async (cmdId, statut) => {
+        if (!window.confirm("Êtes-vous sûr de vouloir annuler cette commande ?")) return;
+        try {
+            await updateStatutCommande(cmdId, statut);
+            setSuccesMsg(`La commande a été annulée.`);
+            setTimeout(() => setSuccesMsg(""), 4000);
+            fetchCommandesData(); // refresh list
+        } catch (err) {
+            console.error("Erreur annulation commande :", err);
+            setErreurPaiement("Impossible d'annuler la commande.");
+            setTimeout(() => setErreurPaiement(null), 4000);
         }
     };
 
@@ -615,20 +629,34 @@ export default function AcheteurDashboard() {
                                                             </button>
                                                         )}
 
+                                                        {/* Bouton Annuler Commande */}
+                                                        {cmd.statut === "en_attente" && (
+                                                            <button
+                                                                onClick={() => handleUpdateStatut(cmd.id, "annulee")}
+                                                                className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-white bg-gray-100 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors border border-gray-200 cursor-pointer"
+                                                                title="Annuler cette commande"
+                                                            >
+                                                                <FaTimes />
+                                                                Annuler
+                                                            </button>
+                                                        )}
+
                                                         {/* Bouton Télécharger Facture PDF */}
-                                                        <button
-                                                            onClick={() => handleDownloadPdf(cmd.id)}
-                                                            disabled={downloadingPdfId === cmd.id}
-                                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors border border-red-200 cursor-pointer disabled:opacity-60"
-                                                            title="Télécharger la facture PDF"
-                                                        >
-                                                            {downloadingPdfId === cmd.id ? (
-                                                                <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-600 border-t-transparent"></div>
-                                                            ) : (
-                                                                <FaFilePdf />
-                                                            )}
-                                                            PDF
-                                                        </button>
+                                                        {(cmd.est_payee || cmd.statut === "payee" || cmd.paiement?.statut === "reussi") && (
+                                                            <button
+                                                                onClick={() => handleDownloadPdf(cmd.id)}
+                                                                disabled={downloadingPdfId === cmd.id}
+                                                                className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors border border-red-200 cursor-pointer disabled:opacity-60"
+                                                                title="Télécharger la facture PDF"
+                                                            >
+                                                                {downloadingPdfId === cmd.id ? (
+                                                                    <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-600 border-t-transparent"></div>
+                                                                ) : (
+                                                                    <FaFilePdf />
+                                                                )}
+                                                                PDF
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
