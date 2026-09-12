@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OpenApi\Attributes as OA;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 #[OA\Schema(
     schema: "Paiement",
     title: "Paiement",
@@ -63,6 +65,7 @@ use OpenApi\Attributes as OA;
 )]
 class Paiement extends Model
 {
+    use HasFactory;
     protected $fillable = [
 
         'commande_id',

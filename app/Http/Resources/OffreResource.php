@@ -94,6 +94,10 @@ class OffreResource extends JsonResource
 
                         'chemin_fichier' => $image->chemin_fichier,
 
+                        'url' => filter_var($image->chemin_fichier, FILTER_VALIDATE_URL)
+                            ? $image->chemin_fichier
+                            : asset('storage/' . ltrim($image->chemin_fichier, '/')),
+
                         'ordre_affichage' => $image->ordre_affichage,
 
                         'date_upload' => $image->date_upload,

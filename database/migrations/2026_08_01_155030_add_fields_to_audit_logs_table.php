@@ -10,39 +10,20 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::table('audit_logs', function (Blueprint $table) {
+    {
+        if (!Schema::hasColumn('audit_logs', 'date_action')) {
+            Schema::table('audit_logs', function (Blueprint $table) {
+                $table->timestamp('date_action')->nullable();
+            });
+        }
+    }
 
-        
-
-        
-
-
-       
-
-        
-
-        
-
-        $table->timestamp('date_action')->nullable();
-    });
-}
-
-public function down(): void
-{
-    Schema::table('audit_logs', function (Blueprint $table) {
-
-        $table->dropForeign(['user_id']);
-
-        $table->dropColumn([
-            'user_id',
-            'action',
-            'table_concernee',
-            'enregistrement_id',
-            'anciennes_valeurs',
-            'nouvelles_valeurs',
-            'date_action'
-        ]);
-    });
-}
+    public function down(): void
+    {
+        if (Schema::hasColumn('audit_logs', 'date_action')) {
+            Schema::table('audit_logs', function (Blueprint $table) {
+                $table->dropColumn(['date_action']);
+            });
+        }
+    }
 };

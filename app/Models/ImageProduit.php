@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OpenApi\Attributes as OA;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 #[OA\Schema(
     schema: "ImageProduit",
     title: "ImageProduit",
@@ -61,6 +63,7 @@ use OpenApi\Attributes as OA;
 )]
 class ImageProduit extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'offre_id',
         'chemin_fichier',

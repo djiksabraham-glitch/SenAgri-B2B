@@ -21,14 +21,18 @@ class AuditLogResource extends JsonResource
 
             'date_action' => $this->date_action,
 
-            'utilisateur' => $this->user ? [
+            'user_id' => $this->user_id,
 
+            'user' => $this->user ? [
                 'id' => $this->user->id,
-
                 'nom' => $this->user->nom,
-
                 'email' => $this->user->email,
+            ] : null,
 
+            'utilisateur' => $this->user ? [
+                'id' => $this->user->id,
+                'nom' => $this->user->nom,
+                'email' => $this->user->email,
             ] : null,
 
             'anciennes_valeurs' => $this->anciennes_valeurs,

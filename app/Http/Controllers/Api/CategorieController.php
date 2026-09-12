@@ -35,7 +35,7 @@ class CategorieController extends Controller
     )]
     public function index()
     {
-        $categories = Categorie::orderBy('nom')->get();
+        $categories = Categorie::withCount('offres')->orderBy('nom')->get();
 
         return CategorieResource::collection($categories);
     }

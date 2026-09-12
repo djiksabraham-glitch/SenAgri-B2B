@@ -356,7 +356,7 @@ public function success(Request $request,PayDunyaService $paydunya)
 
     $commande->update([
 
-        'statut' => 'confirmee'
+        'statut' => 'payee'
 
     ]);
 

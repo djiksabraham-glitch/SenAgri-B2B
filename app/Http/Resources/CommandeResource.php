@@ -22,9 +22,18 @@ class CommandeResource extends JsonResource
 
             'statut' => $this->statut,
 
+            'est_payee' => $this->statut === 'payee' || ($this->paiement && $this->paiement->statut === 'reussi'),
+
             'date_commande' => $this->date_commande,
 
             'created_at' => $this->created_at,
+
+            'paiement' => $this->paiement ? [
+                'id' => $this->paiement->id,
+                'statut' => $this->paiement->statut,
+                'transaction_id' => $this->paiement->transaction_id,
+                'methode' => $this->paiement->methode,
+            ] : null,
 
             'offre' => [
 

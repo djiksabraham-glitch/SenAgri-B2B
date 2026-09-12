@@ -37,7 +37,8 @@ class CommandeController extends Controller
         $commandes = Commande::with([
             'offre',
             'offre.vendeur',
-            'acheteur'
+            'acheteur',
+            'paiement'
         ])->latest()->paginate(10);
 
         return CommandeResource::collection($commandes);

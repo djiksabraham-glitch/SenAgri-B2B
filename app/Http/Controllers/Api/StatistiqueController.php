@@ -150,16 +150,17 @@ class StatistiqueController extends Controller
                 ->take(5)
                 ->get(),
 
-            'ventes_par_mois' => Commande::select(
-
-                DB::raw('MONTH(date_commande) as mois'),
-
-                DB::raw('SUM(prix_total) as chiffre_affaires')
-
-            )
-            ->groupBy(DB::raw('MONTH(date_commande)'))
-            ->orderBy(DB::raw('MONTH(date_commande)'))
-            ->get(),
+            'ventes_par_mois' => (function() {
+                $driver = DB::connection()->getDriverName();
+                $monthExpr = $driver === 'sqlite' ? "strftime('%m', date_commande)" : "MONTH(date_commande)";
+                return Commande::select(
+                    DB::raw("{$monthExpr} as mois"),
+                    DB::raw('SUM(prix_total) as chiffre_affaires')
+                )
+                ->groupBy(DB::raw($monthExpr))
+                ->orderBy(DB::raw($monthExpr))
+                ->get();
+            })(),
 
         ]);
     }

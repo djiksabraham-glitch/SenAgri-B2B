@@ -8,35 +8,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('messages', function (Blueprint $table) {
-
-            $table->id();
-
-            $table->foreignId('expediteur_id')
-                  ->constrained('users')
-                  ->cascadeOnDelete();
-
-            $table->foreignId('destinataire_id')
-                  ->constrained('users')
-                  ->cascadeOnDelete();
-
-            $table->foreignId('offre_id')
-                  ->nullable()
-                  ->constrained('offres')
-                  ->nullOnDelete();
-
-            $table->text('contenu');
-
-            $table->boolean('lu')->default(false);
-
-            $table->timestamp('date_envoi')->useCurrent();
-
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('messages')) {
+            Schema::create('messages', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('expediteur_id')->constrained('users')->cascadeOnDelete();
+                $table->foreignId('destinataire_id')->constrained('users')->cascadeOnDelete();
+                $table->foreignId('offre_id')->nullable()->constrained('offres')->nullOnDelete();
+                $table->text('contenu');
+                $table->boolean('lu')->default(false);
+                $table->timestamp('date_envoi')->useCurrent();
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('messages');
+        // No action on down to avoid dropping original table
     }
 };

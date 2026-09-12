@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OpenApi\Attributes as OA;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 #[OA\Schema(
     schema: "Message",
     title: "Message",
@@ -21,6 +23,7 @@ use OpenApi\Attributes as OA;
 )]
 class Message extends Model
 {
+    use HasFactory;
     protected $fillable = [
 
         'expediteur_id',

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use OpenApi\Attributes as OA;
 
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 #[OA\Schema(
     schema: "Commande",
     title: "Commande",
@@ -72,6 +74,7 @@ use OpenApi\Attributes as OA;
 )]
 class Commande extends Model
 {
+    use HasFactory;
     protected $fillable = [
 
         'offre_id',

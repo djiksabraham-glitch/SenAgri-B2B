@@ -25,10 +25,15 @@ Route::prefix('auth')->group(function () {
 
     Route::post('/register', [AuthController::class, 'register']);
 
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
 
 
 });
+
+// Routes publiques pour consulter les offres et catégories
+Route::get('/offres', [OffreController::class, 'index']);
+Route::get('/offres/{offre}', [OffreController::class, 'show']);
+Route::get('/categories', [CategorieController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -37,12 +42,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
 
     Route::put('/profile', [ProfileController::class, 'update']);
-
-    
-
-    Route::apiResource('offres', OffreController::class) 
-    ->parameters([
-         'offres' => 'offre', ]);
 
     Route::post('/offres/{offre}/images', [ImageProduitController::class, 'store']);
     Route::delete('/images/{imageProduit}', [ImageProduitController::class, 'destroy']);
@@ -85,26 +84,28 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Supprimer un message
     Route::delete('/messages/{message}', [MessageController::class, 'destroy']);
-    // Télécharger la facture d'une commande
-     Route::get(
-        '/commandes/{commande}/facture',
-        [FactureController::class, 'download']
-    )->name('commandes.facture');
+
     // Télécharger la facture PDF d'une commande
     Route::get(
         '/commandes/{commande}/facture',
-        [CommandeController::class, 'facture']
-    );
+        [FactureController::class, 'download']
+    )->name('commandes.facture');
 
 });
 
 
+use App\Http\Controllers\Api\UserController;
+
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::apiResource('categories', CategorieController::class)
+    ->except(['index', 'show'])
     ->parameters([
         'categories' => 'categorie',
     ]);
+
+    Route::apiResource('users', UserController::class);
+    Route::patch('/users/{user}/toggle-actif', [UserController::class, 'toggleActif']);
 
 });
 

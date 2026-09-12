@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use OpenApi\Attributes as OA;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 #[OA\Schema(
     schema: "Offre",
     title: "Offre",
@@ -91,6 +93,7 @@ use OpenApi\Attributes as OA;
 )]
 class Offre extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'categorie_id',
