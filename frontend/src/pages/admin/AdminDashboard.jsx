@@ -13,7 +13,7 @@ import {
     updateUser as updateUserService,
     deleteUser as deleteUserService,
 } from "../../services/adminService";
-import { getCategories, getOffres } from "../../services/offreService";
+import { getCategories, getOffres, deleteOffreAdmin } from "../../services/offreService";
 import { getMesCommandes, downloadFacture } from "../../services/commandeService";
 import {
     FaUserShield, FaChartLine, FaTags, FaBox, FaShoppingBag,
@@ -350,6 +350,26 @@ export default function AdminDashboard() {
             setTimeout(() => setErreurMsg(""), 4000);
         } finally {
             setDeletingUserLoading(false);
+        }
+    };
+
+    const handleDeleteOffre = async (id, nom) => {
+        if (!window.confirm(`Voulez-vous vraiment supprimer l'offre "${nom}" pour non-conformité ?`)) return;
+        
+        setErreurMsg("");
+        setSuccesMsg("");
+        
+        try {
+            await deleteOffreAdmin(id);
+            setSuccesMsg(`L'offre "${nom}" a été supprimée avec succès.`);
+            await fetchOffresData();
+            await fetchStatistiques();
+            setTimeout(() => setSuccesMsg(""), 4000);
+        } catch (err) {
+            console.error("Erreur suppression offre :", err);
+            const msg = err.response?.data?.message || "Erreur lors de la suppression de l'offre.";
+            setErreurMsg(msg);
+            setTimeout(() => setErreurMsg(""), 4000);
         }
     };
 
@@ -884,13 +904,22 @@ export default function AdminDashboard() {
                                                 </td>
 
                                                 <td className="py-4 px-6 text-right">
-                                                    <Link
-                                                        to={`/offres/${o.id}`}
-                                                        className="p-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg inline-block transition-colors"
-                                                        title="Voir la fiche publique"
-                                                    >
-                                                        <FaEye />
-                                                    </Link>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Link
+                                                            to={`/offres/${o.id}`}
+                                                            className="p-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg inline-block transition-colors"
+                                                            title="Voir la fiche publique"
+                                                        >
+                                                            <FaEye />
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => handleDeleteOffre(o.id, o.nom)}
+                                                            className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg inline-block transition-colors"
+                                                            title="Supprimer l'offre pour non-conformité"
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}

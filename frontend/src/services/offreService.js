@@ -94,3 +94,13 @@ export const deleteOffre = async (id) => {
         throw error;
     }
 };
+
+export const deleteOffreAdmin = async (id) => {
+    try {
+        const response = await api.delete(`/admin/offres/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Erreur lors de la suppression de l'offre par l'admin ${id} :`, error);
+        throw error;
+    }
+};

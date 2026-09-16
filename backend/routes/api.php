@@ -107,6 +107,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::apiResource('users', UserController::class);
     Route::patch('/users/{user}/toggle-actif', [UserController::class, 'toggleActif']);
 
+    Route::delete('/admin/offres/{offre}', [App\Http\Controllers\Api\OffreController::class, 'destroy']);
+
 });
 
 Route::middleware(['auth:sanctum', 'vendeur'])->group(function () {
