@@ -72,6 +72,8 @@ class MessageController extends Controller
 
                         'email' => $interlocuteur->email,
 
+                        'role' => $interlocuteur->role ?? null,
+
                     ],
 
                     'dernier_message' => $dernier->contenu,

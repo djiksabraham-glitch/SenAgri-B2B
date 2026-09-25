@@ -25,11 +25,13 @@ class MessageResource extends JsonResource
             'expediteur' => [
                 'id' => $this->expediteur->id,
                 'nom' => $this->expediteur->nom,
+                'role' => $this->expediteur->role ?? null,
             ],
 
             'destinataire' => [
                 'id' => $this->destinataire->id,
                 'nom' => $this->destinataire->nom,
+                'role' => $this->destinataire->role ?? null,
             ],
 
             'offre' => $this->offre ? [

@@ -1,14 +1,22 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Navbar from "../../components/home/Navbar";
+import { useAuth } from "../../hooks/useAuth";
 import { getCategories, createOffre, uploadImageOffre } from "../../services/offreService";
-import { FaArrowLeft, FaCloudUploadAlt, FaCheckCircle, FaExclamationTriangle, FaBox, FaTag, FaCoins, FaWeightHanging, FaTrash } from "react-icons/fa";
+import { getMesCommandes } from "../../services/commandeService";
+import {
+    FaLeaf, FaArrowLeft, FaCloudUploadAlt, FaCheckCircle, FaExclamationTriangle,
+    FaBox, FaTag, FaCoins, FaWeightHanging, FaTrash,
+    FaThLarge, FaShoppingCart, FaRegCommentDots, FaChartBar,
+    FaCog, FaSignOutAlt, FaBell, FaPaperPlane, FaChevronDown
+} from "react-icons/fa";
 
 export default function CreerOffre() {
     const navigate = useNavigate();
+    const { user, logoutUser } = useAuth();
 
     const [categories, setCategories] = useState([]);
     const [loadingCategories, setLoadingCategories] = useState(true);
+    const [commandesCount, setCommandesCount] = useState(0);
 
     const [formData, setFormData] = useState({
         nom: "",
@@ -20,10 +28,8 @@ export default function CreerOffre() {
         est_disponible: true,
     });
 
-    // Support jusqu'à 3 images (fichiers + prévisualisations)
     const [selectedImages, setSelectedImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
-
     const [submitting, setSubmitting] = useState(false);
     const [erreurGenerale, setErreurGenerale] = useState("");
     const [erreursChamps, setErreursChamps] = useState({});
@@ -34,55 +40,52 @@ export default function CreerOffre() {
             try {
                 const cats = await getCategories();
                 setCategories(cats);
-                if (cats && cats.length > 0) {
-                    setFormData((prev) => ({ ...prev, categorie_id: cats[0].id }));
-                }
             } catch (err) {
                 console.error("Erreur chargement catégories :", err);
             } finally {
                 setLoadingCategories(false);
             }
         };
+
+        const fetchCommandes = async () => {
+            try {
+                const data = await getMesCommandes();
+                if (Array.isArray(data)) {
+                    const enAttente = data.filter(c => c.statut === "en_attente").length;
+                    setCommandesCount(enAttente > 0 ? enAttente : 0);
+                }
+            } catch (err) {
+                console.error("Erreur chargement commandes :", err);
+            }
+        };
+
         fetchCats();
+        fetchCommandes();
     }, []);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
-
-        if (erreursChamps[name]) {
-            setErreursChamps((prev) => ({ ...prev, [name]: null }));
-        }
+        setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+        if (erreursChamps[name]) setErreursChamps(prev => ({ ...prev, [name]: null }));
     };
 
-    // Gestion de l'ajout d'images (3 max)
     const handleImagesChange = (e) => {
         const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
+        if (!files.length) return;
         if (selectedImages.length + files.length > 3) {
             setErreurGenerale("Une offre ne peut contenir que 3 photos maximum.");
             return;
         }
-
         const newFiles = [...selectedImages, ...files].slice(0, 3);
         setSelectedImages(newFiles);
-
-        const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
-        setImagePreviews(newPreviews);
+        setImagePreviews(newFiles.map(f => URL.createObjectURL(f)));
         setErreurGenerale("");
     };
 
-    // Supprimer une image de la sélection
-    const handleRemoveImage = (indexToRemove) => {
-        const updatedFiles = selectedImages.filter((_, idx) => idx !== indexToRemove);
-        setSelectedImages(updatedFiles);
-
-        const updatedPreviews = updatedFiles.map((file) => URL.createObjectURL(file));
-        setImagePreviews(updatedPreviews);
+    const handleRemoveImage = (idx) => {
+        const updated = selectedImages.filter((_, i) => i !== idx);
+        setSelectedImages(updated);
+        setImagePreviews(updated.map(f => URL.createObjectURL(f)));
     };
 
     const handleSubmit = async (e) => {
@@ -93,346 +96,422 @@ export default function CreerOffre() {
         setSuccesMsg("");
 
         try {
-            // 1. Créer l'offre
             const resOffre = await createOffre({
                 ...formData,
                 prix_unitaire: Number(formData.prix_unitaire),
                 quantite_disponible: Number(formData.quantite_disponible),
                 categorie_id: Number(formData.categorie_id),
             });
-
-            console.log("Offre créée :", resOffre);
             const newOffreId = resOffre?.data?.id || resOffre?.id;
 
-            // 2. Téléverser les photos (jusqu'à 3 images max)
             if (selectedImages.length > 0 && newOffreId) {
                 for (let i = 0; i < selectedImages.length; i++) {
-                    try {
-                        await uploadImageOffre(newOffreId, selectedImages[i], i + 1);
-                    } catch (imgErr) {
-                        console.error(`Erreur lors de l'envoi de la photo ${i + 1} :`, imgErr);
-                    }
+                    try { await uploadImageOffre(newOffreId, selectedImages[i], i + 1); }
+                    catch (imgErr) { console.error(`Erreur photo ${i + 1}:`, imgErr); }
                 }
             }
 
-            setSuccesMsg("Votre offre agricole a été publiée avec succès avec vos photos !");
-
-            setTimeout(() => {
-                navigate("/vendeur");
-            }, 1500);
-
+            setSuccesMsg("Votre offre agricole a été publiée avec succès !");
+            setTimeout(() => navigate("/vendeur"), 1500);
         } catch (err) {
-            console.error("Erreur création offre :", err);
-
-            if (err.response && err.response.status === 422) {
+            if (err.response?.status === 422) {
                 const errors = err.response.data.errors || {};
                 setErreursChamps(errors);
-                
-                // Extraire et afficher tous les messages d'erreur détaillés du backend
-                const errorMessages = Object.values(errors).flat();
-                setErreurGenerale(
-                    errorMessages.length > 0
-                        ? errorMessages.join(" — ")
-                        : "Certains champs ne respectent pas les critères de validation."
-                );
-            } else if (err.response && err.response.data?.message) {
-                setErreurGenerale(err.response.data.message);
+                const msgs = Object.values(errors).flat();
+                setErreurGenerale(msgs.length ? msgs.join(" — ") : "Certains champs sont invalides.");
             } else {
-                setErreurGenerale("Erreur lors de la publication. Assurez-vous d'être bien connecté en tant que Vendeur.");
+                setErreurGenerale(err.response?.data?.message || "Erreur lors de la publication.");
             }
         } finally {
             setSubmitting(false);
         }
     };
 
+    const handleLogout = async () => {
+        await logoutUser();
+        navigate("/");
+    };
+
+    const getAvatarUrl = () => {
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.nom || "V")}&background=138040&color=fff`;
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-between">
-            <Navbar />
+        <div className="flex h-screen bg-[#f8f9fc] font-sans text-gray-800 overflow-hidden">
 
-            <main className="flex-grow py-10 px-4 sm:px-6 lg:px-8 max-w-4xl w-full mx-auto">
-                
-                {/* Bouton retour */}
-                <Link
-                    to="/vendeur"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-green-700 mb-6 transition-colors"
-                >
-                    <FaArrowLeft /> Retour au tableau de bord
-                </Link>
-
-                <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 sm:p-12">
-                    
-                    <div className="border-b border-gray-100 pb-6 mb-8">
-                        <span className="px-3 py-1 bg-green-100 text-green-700 font-semibold text-xs rounded-full uppercase tracking-wider">
-                            Nouvelle Offre
-                        </span>
-                        <h1 className="text-3xl font-extrabold text-gray-900 mt-2">
-                            Publier un produit agricole
-                        </h1>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Ajoutez jusqu'à 3 photos pour valoriser vos produits auprès des acheteurs.
-                        </p>
+            {/* ===== SIDEBAR ===== */}
+            <aside className="w-[240px] bg-white border-r border-gray-100 flex-col justify-between hidden md:flex shrink-0">
+                <div>
+                    <div className="px-6 pt-6 pb-8">
+                        <Link to="/" className="flex items-center gap-3">
+                            <FaLeaf className="text-[#138040] text-[26px]" />
+                            <div>
+                                <p className="text-[18px] font-extrabold text-[#138040] leading-none tracking-tight">SenAgri</p>
+                                <p className="text-[9px] text-gray-400 font-bold mt-0.5 uppercase tracking-widest">Marché Agricole B2B</p>
+                            </div>
+                        </Link>
                     </div>
 
-                    {/* Messages d'alerte */}
+                    <div className="px-4">
+                        <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-[0.15em] mb-3 px-2">Tableau de bord</p>
+                        <nav className="space-y-1">
+                            <Link to="/vendeur" className="w-full flex items-center gap-3 text-gray-500 hover:bg-gray-50 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors text-left">
+                                <FaThLarge className="text-gray-400 text-[14px] shrink-0" /> Vue d'ensemble
+                            </Link>
+                            <Link to="/vendeur" className="w-full flex items-center gap-3 bg-[#f0faf5] text-[#138040] border border-[#d5eddf] px-4 py-2.5 rounded-[12px] font-bold text-[12px] text-left">
+                                <FaBox className="text-[#138040] text-[14px] shrink-0" /> Mes offres
+                            </Link>
+                            <Link to="/vendeur" className="w-full flex items-center justify-between text-gray-500 hover:bg-gray-50 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors">
+                                <span className="flex items-center gap-3"><FaShoppingCart className="text-gray-400 text-[14px] shrink-0" /> Commandes</span>
+                                {commandesCount > 0 && (
+                                    <span className="bg-[#f08c35] text-white text-[9px] px-2 py-0.5 rounded-full font-black">{commandesCount}</span>
+                                )}
+                            </Link>
+                            <button className="w-full flex items-center justify-between text-gray-500 hover:bg-gray-50 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors">
+                                <span className="flex items-center gap-3"><FaRegCommentDots className="text-gray-400 text-[14px] shrink-0" /> Messagerie</span>
+                                <span className="w-2 h-2 bg-[#f08c35] rounded-full"></span>
+                            </button>
+                            <button className="w-full flex items-center gap-3 text-gray-500 hover:bg-gray-50 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors text-left">
+                                <FaChartBar className="text-gray-400 text-[14px] shrink-0" /> Statistiques
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+
+                <div className="px-4 pb-6 border-t border-gray-100 pt-4 space-y-1">
+                    <button className="w-full flex items-center gap-3 text-gray-500 hover:bg-gray-50 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors text-left">
+                        <FaCog className="text-gray-400 text-[14px] shrink-0" /> Paramètres
+                    </button>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 text-[#c0392b] hover:bg-red-50 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors text-left">
+                        <FaSignOutAlt className="text-[#c0392b] text-[14px] shrink-0" /> Déconnexion
+                    </button>
+                </div>
+            </aside>
+
+            {/* ===== MAIN ===== */}
+            <main className="flex-1 overflow-y-auto">
+                {/* Header */}
+                <header className="bg-white/80 backdrop-blur sticky top-0 z-10 px-8 py-3 flex items-center justify-between border-b border-gray-100">
+                    <span className="bg-[#e4f5ed] text-[#138040] text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-[#138040] rounded-full inline-block"></span>
+                        Sénégal • Campagne en cours
+                    </span>
+                    <div className="flex items-center gap-5">
+                        <button className="relative text-gray-500 hover:text-gray-800">
+                            <FaBell className="text-xl" />
+                            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#f08c35] border-2 border-white rounded-full"></span>
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <div className="text-right hidden sm:block">
+                                <p className="text-[13px] font-bold text-gray-900 leading-none">{user?.nom || "Vendeur"}</p>
+                                <p className="text-[10px] font-bold text-[#b05a18] mt-0.5">Vendeur Certifié</p>
+                            </div>
+                            <img src={getAvatarUrl()} alt="avatar" className="w-9 h-9 rounded-full object-cover border-2 border-[#e4f5ed]" />
+                        </div>
+                    </div>
+                </header>
+
+                <div className="p-8 max-w-[820px] mx-auto">
+
+                    {/* Sub-header nav */}
+                    <div className="flex items-center justify-between mb-6">
+                        <Link to="/vendeur" className="flex items-center gap-2 text-[13px] font-bold text-gray-600 hover:text-[#138040] transition-colors">
+                            <FaArrowLeft className="text-[11px]" /> Retour à mes offres
+                        </Link>
+                        <span className="text-[12px] font-bold text-gray-400">
+                            Campagne agricole 2025/2026 • <span className="text-[#138040]">Mode Vendeur Actif</span>
+                        </span>
+                    </div>
+
+                    {/* Bannière info */}
+                    <div className="bg-[#eef3fb] border border-[#d6e4f7] rounded-[16px] px-6 py-4 mb-8">
+                        <p className="text-[10px] font-extrabold text-[#5b7fb5] uppercase tracking-widest mb-1">Plateforme Nationale SenAgri</p>
+                        <p className="text-[17px] font-extrabold text-[#1a2e50]">Mettez vos récoltes en relation directe avec les grossistes & coopératives</p>
+                    </div>
+
+                    {/* Alerts */}
                     {erreurGenerale && (
-                        <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl flex items-start gap-3">
-                            <FaExclamationTriangle className="text-red-500 text-lg flex-shrink-0 mt-0.5" />
+                        <div className="mb-6 bg-red-50 border border-red-200 p-4 rounded-[14px] flex items-start gap-3">
+                            <FaExclamationTriangle className="text-red-500 text-[16px] shrink-0 mt-0.5" />
                             <div>
-                                <h4 className="text-sm font-bold text-red-800">Erreur de validation</h4>
-                                <p className="text-xs text-red-700 font-medium mt-1">{erreurGenerale}</p>
+                                <p className="text-[13px] font-bold text-red-800">Erreur de validation</p>
+                                <p className="text-[12px] text-red-700 mt-0.5 font-medium">{erreurGenerale}</p>
                             </div>
                         </div>
                     )}
-
                     {succesMsg && (
-                        <div className="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl flex items-center gap-3">
-                            <FaCheckCircle className="text-green-600 text-lg flex-shrink-0" />
-                            <p className="text-sm font-semibold text-green-800">{succesMsg}</p>
+                        <div className="mb-6 bg-green-50 border border-green-200 p-4 rounded-[14px] flex items-center gap-3">
+                            <FaCheckCircle className="text-green-600 text-[16px] shrink-0" />
+                            <p className="text-[13px] font-bold text-green-800">{succesMsg}</p>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        
-                        {/* Section Photos du produit (Jusqu'à 3 photos) */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <label className="block text-sm font-bold text-gray-800">
-                                    Photos du produit (Jusqu'à 3 photos)
-                                </label>
-                                <span className="text-xs font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
-                                    {selectedImages.length} / 3 photo(s)
-                                </span>
-                            </div>
-                            
-                            {/* Grille de prévisualisation */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                                {imagePreviews.map((preview, index) => (
-                                    <div key={index} className="relative group rounded-2xl overflow-hidden border border-gray-200 shadow-sm h-40 bg-gray-100">
-                                        <img
-                                            src={preview}
-                                            alt={`Photo ${index + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-xl shadow-md cursor-pointer hover:bg-red-700 transition-colors"
-                                             onClick={() => handleRemoveImage(index)}
-                                             title="Supprimer cette photo">
-                                            <FaTrash className="text-xs" />
-                                        </div>
-                                        <span className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                            Photo {index + 1} {index === 0 ? "(Principale)" : ""}
-                                        </span>
-                                    </div>
-                                ))}
+                    {/* Form card */}
+                    <div className="bg-white rounded-[18px] border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
 
-                                {/* Bouton d'ajout s'il reste des emplacements */}
-                                {selectedImages.length < 3 && (
-                                    <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-300 hover:border-green-500 rounded-2xl cursor-pointer bg-gray-50/50 hover:bg-green-50/20 transition-all p-4 text-center">
-                                        <FaCloudUploadAlt className="text-3xl text-gray-400 mb-1" />
-                                        <span className="text-xs font-bold text-green-700">
-                                            {selectedImages.length === 0 ? "Ajouter des photos" : "Ajouter une autre photo"}
-                                        </span>
-                                        <span className="text-[10px] text-gray-400 mt-1">PNG, JPG, WEBP (Max 3)</span>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            onChange={handleImagesChange}
-                                            className="sr-only"
-                                        />
+                        {/* Form header */}
+                        <div className="px-8 pt-7 pb-6 border-b border-gray-50">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="flex items-center gap-2 text-[10px] font-extrabold text-[#138040] uppercase tracking-widest bg-[#e4f5ed] border border-[#c7e8d5] px-3 py-1.5 rounded-full">
+                                    <span className="w-1.5 h-1.5 bg-[#138040] rounded-full"></span> Nouvelle offre
+                                </span>
+                                <span className="text-[11px] font-bold text-gray-400">Formulaire certifié SenAgri Teranga</span>
+                            </div>
+                            <h1 className="text-[28px] font-extrabold text-gray-900 mb-2 tracking-tight">Publier un produit agricole</h1>
+                            <p className="text-[13px] text-gray-500 font-medium">
+                                Ajoutez jusqu'à 3 photos pour valoriser vos produits auprès des acheteurs et coopératives du Sénégal.
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="px-8 py-7 space-y-8">
+
+                            {/* Photos */}
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <label className="text-[13px] font-bold text-gray-800">
+                                        Photos du produit <span className="text-gray-400 font-semibold">(Jusqu'à 3 photos)</span>
+                                    </label>
+                                    <span className="text-[11px] font-bold text-gray-500">{selectedImages.length} / 3 photo(s)</span>
+                                </div>
+
+                                {/* Grille prévisualisation + zone de drop */}
+                                {imagePreviews.length > 0 ? (
+                                    <div className="grid grid-cols-3 gap-4 mb-4">
+                                        {imagePreviews.map((preview, idx) => (
+                                            <div key={idx} className="relative group rounded-[14px] overflow-hidden border border-gray-200 h-36 bg-gray-100">
+                                                <img src={preview} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                                                <div
+                                                    onClick={() => handleRemoveImage(idx)}
+                                                    className="absolute top-2 right-2 bg-red-600/90 backdrop-blur text-white p-1.5 rounded-[8px] cursor-pointer hover:bg-red-700 transition-colors shadow-md"
+                                                    title="Supprimer"
+                                                >
+                                                    <FaTrash className="text-[10px]" />
+                                                </div>
+                                                <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                                                    Photo {idx + 1}{idx === 0 ? " · Principale" : ""}
+                                                </span>
+                                            </div>
+                                        ))}
+                                        {selectedImages.length < 3 && (
+                                            <label className="flex flex-col items-center justify-center h-36 border-2 border-dashed border-gray-200 hover:border-[#138040] rounded-[14px] cursor-pointer hover:bg-[#f0faf5] transition-all">
+                                                <FaCloudUploadAlt className="text-2xl text-gray-300 mb-1" />
+                                                <span className="text-[11px] font-bold text-gray-400">Ajouter</span>
+                                                <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="sr-only" />
+                                            </label>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <label className="flex flex-col items-center justify-center h-[180px] border-2 border-dashed border-gray-200 hover:border-[#138040] rounded-[16px] cursor-pointer hover:bg-[#f0faf5] transition-all bg-[#fafbfc]">
+                                        <FaCloudUploadAlt className="text-[32px] text-[#138040]/60 mb-3" />
+                                        <span className="text-[14px] font-bold text-[#138040]">Ajouter des photos</span>
+                                        <span className="text-[12px] text-gray-400 mt-1 font-medium">Glissez-déposez vos fichiers ou parcourez votre appareil</span>
+                                        <div className="flex items-center gap-2 mt-3">
+                                            <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-3 py-1 rounded-full">PNG, JPG, WEBP (Max 3)</span>
+                                            <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-3 py-1 rounded-full">Max 10 Mo par photo</span>
+                                        </div>
+                                        <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="sr-only" />
                                     </label>
                                 )}
                             </div>
-                        </div>
 
-                        {/* Nom du produit & Catégorie */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                    Nom de l'offre <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative rounded-xl shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                                        <FaBox />
+                            {/* Nom + Catégorie */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-[13px] font-bold text-gray-800 mb-2">
+                                        Nom de l'offre <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-300">
+                                            <FaBox className="text-[14px]" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            name="nom"
+                                            required
+                                            value={formData.nom}
+                                            onChange={handleChange}
+                                            placeholder="Ex: Oignons Frais de Podor"
+                                            className={`w-full pl-10 pr-4 py-3 rounded-[12px] border text-[13px] outline-none transition-colors bg-white ${
+                                                erreursChamps.nom
+                                                    ? "border-red-400"
+                                                    : "border-gray-200 focus:border-[#138040]"
+                                            }`}
+                                        />
                                     </div>
-                                    <input
-                                        type="text"
-                                        name="nom"
-                                        required
-                                        value={formData.nom}
-                                        onChange={handleChange}
-                                        placeholder="Ex: Oignons Frais de Podor"
-                                        className={`block w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-colors ${
-                                            erreursChamps.nom ? "border-red-400 bg-red-50/20" : "border-gray-200 focus:border-green-600"
-                                        }`}
-                                    />
+                                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">Nom précis avec variété ou localité pour optimiser la recherche.</p>
+                                    {erreursChamps.nom && <p className="text-[11px] text-red-600 font-bold mt-1">{erreursChamps.nom[0]}</p>}
                                 </div>
-                                {erreursChamps.nom && (
-                                    <p className="text-xs text-red-600 font-medium mt-1">{erreursChamps.nom[0]}</p>
-                                )}
+
+                                <div>
+                                    <label className="block text-[13px] font-bold text-gray-800 mb-2">
+                                        Catégorie <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-300">
+                                            <FaTag className="text-[14px]" />
+                                        </div>
+                                        <select
+                                            name="categorie_id"
+                                            required
+                                            value={formData.categorie_id}
+                                            onChange={handleChange}
+                                            className={`w-full appearance-none pl-10 pr-10 py-3 rounded-[12px] border text-[13px] outline-none transition-colors bg-white cursor-pointer ${
+                                                erreursChamps.categorie_id
+                                                    ? "border-red-400"
+                                                    : "border-gray-200 focus:border-[#138040]"
+                                            }`}
+                                        >
+                                            <option value="">Sélectionner une filière agricole...</option>
+                                            {loadingCategories ? (
+                                                <option disabled>Chargement...</option>
+                                            ) : (
+                                                categories.map(cat => <option key={cat.id} value={cat.id}>{cat.nom}</option>)
+                                            )}
+                                        </select>
+                                        <FaChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none" />
+                                    </div>
+                                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">Détermine les acheteurs notifiés sur la bourse de commerce.</p>
+                                    {erreursChamps.categorie_id && <p className="text-[11px] text-red-600 font-bold mt-1">{erreursChamps.categorie_id[0]}</p>}
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                    Catégorie <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative rounded-xl shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                                        <FaTag />
+                            {/* Prix, Quantité, Unité */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-[13px] font-bold text-gray-800 mb-2">
+                                        Prix unitaire (FCFA) <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-300">
+                                            <FaCoins className="text-[14px]" />
+                                        </div>
+                                        <input
+                                            type="number"
+                                            name="prix_unitaire"
+                                            required
+                                            min="1"
+                                            value={formData.prix_unitaire}
+                                            onChange={handleChange}
+                                            placeholder="Ex: 500"
+                                            className={`w-full pl-10 pr-14 py-3 rounded-[12px] border text-[13px] outline-none transition-colors bg-white ${
+                                                erreursChamps.prix_unitaire ? "border-red-400" : "border-gray-200 focus:border-[#138040]"
+                                            }`}
+                                        />
+                                        <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-gray-400 pointer-events-none">FCFA</span>
                                     </div>
-                                    <select
-                                        name="categorie_id"
-                                        required
-                                        value={formData.categorie_id}
-                                        onChange={handleChange}
-                                        className={`block w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-colors bg-white ${
-                                            erreursChamps.categorie_id ? "border-red-400 bg-red-50/20" : "border-gray-200 focus:border-green-600"
-                                        }`}
-                                    >
-                                        {loadingCategories ? (
-                                            <option value="">Chargement des catégories...</option>
-                                        ) : categories.length === 0 ? (
-                                            <option value="">Aucune catégorie disponible</option>
-                                        ) : (
-                                            categories.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>
-                                                    {cat.nom}
-                                                </option>
-                                            ))
-                                        )}
-                                    </select>
+                                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">Montant net producteur conseillé.</p>
+                                    {erreursChamps.prix_unitaire && <p className="text-[11px] text-red-600 font-bold mt-1">{erreursChamps.prix_unitaire[0]}</p>}
                                 </div>
-                                {erreursChamps.categorie_id && (
-                                    <p className="text-xs text-red-600 font-medium mt-1">{erreursChamps.categorie_id[0]}</p>
-                                )}
-                            </div>
-                        </div>
 
-                        {/* Prix, Quantité et Unité */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                    Prix unitaire (FCFA) <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative rounded-xl shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                                        <FaCoins />
+                                <div>
+                                    <label className="block text-[13px] font-bold text-gray-800 mb-2">
+                                        Quantité disponible <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-300">
+                                            <FaWeightHanging className="text-[14px]" />
+                                        </div>
+                                        <input
+                                            type="number"
+                                            name="quantite_disponible"
+                                            required
+                                            min="1"
+                                            value={formData.quantite_disponible}
+                                            onChange={handleChange}
+                                            placeholder="Ex: 1000"
+                                            className={`w-full pl-10 pr-4 py-3 rounded-[12px] border text-[13px] outline-none transition-colors bg-white ${
+                                                erreursChamps.quantite_disponible ? "border-red-400" : "border-gray-200 focus:border-[#138040]"
+                                            }`}
+                                        />
                                     </div>
-                                    <input
-                                        type="number"
-                                        name="prix_unitaire"
-                                        required
-                                        min="1"
-                                        value={formData.prix_unitaire}
-                                        onChange={handleChange}
-                                        placeholder="Ex: 500"
-                                        className={`block w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-colors ${
-                                            erreursChamps.prix_unitaire ? "border-red-400 bg-red-50/20" : "border-gray-200 focus:border-green-600"
-                                        }`}
-                                    />
+                                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">Stock actuellement prêt au champ/magasin.</p>
+                                    {erreursChamps.quantite_disponible && <p className="text-[11px] text-red-600 font-bold mt-1">{erreursChamps.quantite_disponible[0]}</p>}
                                 </div>
-                                {erreursChamps.prix_unitaire && (
-                                    <p className="text-xs text-red-600 font-medium mt-1">{erreursChamps.prix_unitaire[0]}</p>
-                                )}
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                    Quantité disponible <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative rounded-xl shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-                                        <FaWeightHanging />
+                                <div>
+                                    <label className="block text-[13px] font-bold text-gray-800 mb-2">
+                                        Unité de mesure <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-300">
+                                            <FaBox className="text-[14px]" />
+                                        </div>
+                                        <select
+                                            name="unite"
+                                            required
+                                            value={formData.unite}
+                                            onChange={handleChange}
+                                            className={`w-full appearance-none pl-10 pr-10 py-3 rounded-[12px] border text-[13px] outline-none bg-white cursor-pointer transition-colors ${
+                                                erreursChamps.unite ? "border-red-400" : "border-gray-200 focus:border-[#138040]"
+                                            }`}
+                                        >
+                                            <option value="Kg">Kg (Kilogramme)</option>
+                                            <option value="Sac (50kg)">Sac de 50kg</option>
+                                            <option value="Tonne">Tonne</option>
+                                            <option value="Litre">Litre</option>
+                                            <option value="Caisse">Caisse</option>
+                                            <option value="Unité">Unité</option>
+                                        </select>
+                                        <FaChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none" />
                                     </div>
-                                    <input
-                                        type="number"
-                                        name="quantite_disponible"
-                                        required
-                                        min="1"
-                                        value={formData.quantite_disponible}
-                                        onChange={handleChange}
-                                        placeholder="Ex: 1000"
-                                        className={`block w-full pl-10 pr-4 py-3 rounded-xl border text-sm outline-none transition-colors ${
-                                            erreursChamps.quantite_disponible ? "border-red-400 bg-red-50/20" : "border-gray-200 focus:border-green-600"
-                                        }`}
-                                    />
+                                    <p className="text-[11px] text-gray-400 font-medium mt-1.5">Conditionnement standard de vente.</p>
+                                    {erreursChamps.unite && <p className="text-[11px] text-red-600 font-bold mt-1">{erreursChamps.unite[0]}</p>}
                                 </div>
-                                {erreursChamps.quantite_disponible && (
-                                    <p className="text-xs text-red-600 font-medium mt-1">{erreursChamps.quantite_disponible[0]}</p>
-                                )}
                             </div>
 
+                            {/* Description */}
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                    Unité de mesure <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    name="unite"
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-[13px] font-bold text-gray-800">
+                                        Description détaillée du produit <span className="text-red-500">*</span>{" "}
+                                        <span className="text-gray-400 font-semibold">(Au moins 10 caractères)</span>
+                                    </label>
+                                    <span className="text-[11px] font-bold text-gray-400">{formData.description.length} caractère{formData.description.length !== 1 ? "s" : ""}</span>
+                                </div>
+                                <textarea
+                                    name="description"
                                     required
-                                    value={formData.unite}
+                                    minLength={10}
+                                    rows={6}
+                                    value={formData.description}
                                     onChange={handleChange}
-                                    className={`block w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors bg-white ${
-                                        erreursChamps.unite ? "border-red-400 bg-red-50/20" : "border-gray-200 focus:border-green-600"
+                                    placeholder="Décrivez la qualité, l'origine, le mode de conservation ou les conditions de livraison..."
+                                    className={`w-full p-4 rounded-[12px] border text-[13px] outline-none transition-colors bg-white resize-y ${
+                                        erreursChamps.description ? "border-red-400" : "border-gray-200 focus:border-[#138040]"
+                                    }`}
+                                />
+                                {erreursChamps.description && <p className="text-[11px] text-red-600 font-bold mt-1">{erreursChamps.description[0]}</p>}
+                            </div>
+
+                            {/* Submit */}
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className={`w-full py-4 bg-[#138040] hover:bg-[#0e6530] text-white font-extrabold text-[15px] rounded-[14px] transition-all shadow-lg flex items-center justify-center gap-3 ${
+                                        submitting ? "opacity-70 cursor-not-allowed" : ""
                                     }`}
                                 >
-                                    <option value="Kg">Kg (Kilogramme)</option>
-                                    <option value="Sac (50kg)">Sac de 50kg</option>
-                                    <option value="Tonne">Tonne</option>
-                                    <option value="Litre">Litre</option>
-                                    <option value="Caisse">Caisse</option>
-                                    <option value="Unité">Unité</option>
-                                </select>
-                                {erreursChamps.unite && (
-                                    <p className="text-xs text-red-600 font-medium mt-1">{erreursChamps.unite[0]}</p>
-                                )}
+                                    {submitting ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                                            Publication en cours...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaPaperPlane className="text-white/80 text-[16px]" />
+                                            Publier l'offre agricole
+                                        </>
+                                    )}
+                                </button>
+                                <p className="text-center text-[11px] text-gray-400 font-medium mt-3 flex items-center justify-center gap-2">
+                                    <FaCheckCircle className="text-[#138040]/60 text-[12px]" />
+                                    Votre offre sera soumise instantanément à notre réseau avec nos grossistes partenaires.
+                                </p>
                             </div>
-                        </div>
-
-                        {/* Description */}
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Description détaillée du produit <span className="text-red-500">*</span> <span className="text-xs text-gray-400 font-normal">(Au moins 10 caractères)</span>
-                            </label>
-                            <textarea
-                                name="description"
-                                required
-                                minLength={10}
-                                rows="4"
-                                value={formData.description}
-                                onChange={handleChange}
-                                placeholder="Décrivez la qualité, l'origine, le mode de conservation ou les conditions de livraison..."
-                                className={`block w-full p-4 rounded-xl border text-sm outline-none transition-colors ${
-                                    erreursChamps.description ? "border-red-400 bg-red-50/20" : "border-gray-200 focus:border-green-600"
-                                }`}
-                            ></textarea>
-                            {erreursChamps.description && (
-                                <p className="text-xs text-red-600 font-medium mt-1">{erreursChamps.description[0]}</p>
-                            )}
-                        </div>
-
-                        {/* Bouton de validation */}
-                        <div className="pt-4">
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className={`w-full py-4 px-6 bg-green-600 hover:bg-green-700 text-white font-bold text-base rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center ${
-                                    submitting ? "opacity-75 cursor-not-allowed" : ""
-                                }`}
-                            >
-                                {submitting ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>
-                                        Publication de l'offre et des photos ({selectedImages.length})...
-                                    </>
-                                ) : (
-                                    "Publier l'offre agricole"
-                                )}
-                            </button>
-                        </div>
-
-                    </form>
-
+                        </form>
+                    </div>
                 </div>
-
             </main>
         </div>
     );
