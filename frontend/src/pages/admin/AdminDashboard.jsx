@@ -20,11 +20,11 @@ import {
     FaSearch, FaEye, FaCoins, FaUsers, FaChartBar, FaCalendarAlt,
     FaTimes, FaFilePdf, FaStore, FaLayerGroup, FaInfoCircle,
     FaUserCog, FaBan, FaUserCheck, FaUserEdit, FaPhone, FaShieldAlt,
-    FaCog, FaSignOutAlt, FaBell,
 } from "react-icons/fa";
+import { getImageUrl as resolveImageUrl } from "../../utils/imageUrl";
 
 export default function AdminDashboard() {
-    const { user, logoutUser } = useAuth();
+    const { user, confirmLogout } = useAuth();
     const navigate = useNavigate();
 
     // Onglet actif : "vue-d-ensemble" | "categories" | "offres" | "commandes" | "audit-logs" | "utilisateurs"
@@ -182,8 +182,7 @@ export default function AdminDashboard() {
 
     // Déconnexion
     const handleLogout = () => {
-        logoutUser();
-        navigate("/");
+        confirmLogout();
     };
 
     // -------------------------------------------------------------
@@ -382,15 +381,7 @@ export default function AdminDashboard() {
 
     // Helper URLs images
     const getImageUrl = (img) => {
-        if (!img) return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80";
-        if (typeof img === "object" && img.url) return img.url;
-        const path = typeof img === "object" ? (img.chemin_fichier || "") : img;
-        if (!path) return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80";
-        if (path.startsWith("http://") || path.startsWith("https://")) return path;
-        const clean = path.replace(/^\//, "").replace(/^public\//, "");
-        return clean.startsWith("storage/")
-            ? `http://127.0.0.1:8000/${clean}`
-            : `http://127.0.0.1:8000/storage/${clean}`;
+        return resolveImageUrl(img, "SenAgri");
     };
 
     // Badges Audit Log Actions
@@ -622,7 +613,7 @@ export default function AdminDashboard() {
                 <div className="flex-1 p-8">
 
                     {/* En-tête de la page */}
-                    <div className="bg-[#138040] rounded-3xl text-white px-8 py-7 mb-8 flex items-center justify-between">
+                    <div className="bg-[#062B2B] rounded-3xl text-white px-8 py-7 mb-8 flex items-center justify-between">
                         <div>
                             <span className="text-[11px] font-bold bg-white/15 border border-white/20 px-3 py-1 rounded-full flex items-center gap-2 w-fit mb-3">
                                 <FaUserShield className="text-white/80" /> Espace Administrateur SenAgri

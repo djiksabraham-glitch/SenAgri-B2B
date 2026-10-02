@@ -24,6 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'acheteur' => AcheteurMiddleware::class,
 
         ]);
+
+        // Exclure les fichiers statiques du storage de la vérification CSRF
+        $middleware->validateCsrfTokens(except: [
+            'storage/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {

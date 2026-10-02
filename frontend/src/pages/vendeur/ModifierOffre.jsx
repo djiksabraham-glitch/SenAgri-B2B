@@ -4,6 +4,7 @@ import Navbar from "../../components/home/Navbar";
 import {
     getOffreById, getCategories, updateOffre, uploadImageOffre
 } from "../../services/offreService";
+import { getImageUrl as resolveImageUrl } from "../../utils/imageUrl";
 import {
     FaArrowLeft, FaCloudUploadAlt, FaCheckCircle,
     FaExclamationTriangle, FaBox, FaTag, FaCoins, FaWeightHanging, FaTrash
@@ -106,15 +107,7 @@ export default function ModifierOffre() {
     };
 
     const getImageUrl = (img) => {
-        if (!img) return "https://placehold.co/200x200?text=Photo";
-        if (typeof img === "object" && img.url) return img.url;
-        const path = typeof img === "object" ? (img.chemin_fichier || "") : img;
-        if (!path) return "https://placehold.co/200x200?text=Photo";
-        if (path.startsWith("http://") || path.startsWith("https://")) return path;
-        const clean = path.replace(/^\//, "").replace(/^public\//, "");
-        return clean.startsWith("storage/")
-            ? `http://127.0.0.1:8000/${clean}`
-            : `http://127.0.0.1:8000/storage/${clean}`;
+        return resolveImageUrl(img, "Photo");
     };
 
     const handleSubmit = async (e) => {

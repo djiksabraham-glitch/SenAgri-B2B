@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import { getOffres, deleteOffre } from "../../services/offreService";
 import { getMesCommandes, updateStatutCommande } from "../../services/commandeService";
+import { getImageUrl as resolveImageUrl } from "../../utils/imageUrl";
 
 const STATUTS = [
     { value: "en_attente", label: "En attente" },
@@ -35,7 +36,7 @@ function getStatusLabel(statut) {
 }
 
 export default function VendeurDashboard() {
-    const { user, logoutUser } = useAuth();
+    const { user, confirmLogout } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("vue-d-ensemble");
 
@@ -119,18 +120,13 @@ export default function VendeurDashboard() {
         }
     };
 
-    const handleLogout = async () => {
-        await logoutUser();
-        navigate("/");
+    const handleLogout = () => {
+        confirmLogout();
     };
 
     const getImageUrl = (img) => {
         if (!img) return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.nom || "V")}&background=138040&color=fff`;
-        const path = typeof img === "object" ? (img.chemin_fichier || "") : img;
-        if (!path) return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.nom || "V")}&background=138040&color=fff`;
-        if (path.startsWith("http://") || path.startsWith("https://")) return path;
-        const clean = path.replace(/^\//, "").replace(/^public\//, "");
-        return clean.startsWith("storage/") ? `http://127.0.0.1:8000/${clean}` : `http://127.0.0.1:8000/storage/${clean}`;
+        return resolveImageUrl(img, user?.nom || "V");
     };
 
     const commandesEnAttente = commandes.filter(c => c.statut === "en_attente").length;

@@ -13,7 +13,7 @@ import {
 } from "react-icons/fa";
 
 export default function Messagerie() {
-    const { user, logoutUser } = useAuth();
+    const { user, confirmLogout } = useAuth();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -23,7 +23,7 @@ export default function Messagerie() {
     const [conversations, setConversations] = useState([]);
     const [loadingConvs, setLoadingConvs] = useState(true);
 
-    const [selectedUser, setSelectedUser] = useState(null); // { id, nom, email }
+    const [selectedUser, setSelectedUser] = useState(null); // { id, nom, email, role }
     const [messages, setMessages] = useState([]);
     const [loadingMsgs, setLoadingMsgs] = useState(false);
 
@@ -38,72 +38,117 @@ export default function Messagerie() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    // 1. Charger les conversations
-    const fetchConvs = async () => {
-        try {
-            const data = await getConversations();
-            setConversations(data || []);
-            return data;
-        } catch (err) {
-            console.error("Erreur chargement conversations :", err);
-            return [];
-        } finally {
-            setLoadingConvs(false);
-        }
-    };
-
+    // 1. Initialisation et chargement des conversations
     useEffect(() => {
-        fetchConvs();
-    }, []);
+        let isMounted = true;
 
-    // 2. Gestion de l'ouverture de conversation selon URL params
-    useEffect(() => {
-        if (targetUserIdParam) {
-            const userIdNum = Number(targetUserIdParam);
-            const existing = conversations.find(c => c.utilisateur.id === userIdNum);
-            if (existing) {
-                setSelectedUser(existing.utilisateur);
-            } else {
-                setSelectedUser({
-                    id: userIdNum,
-                    nom: searchParams.get("vendeurNom") || `Utilisateur #${userIdNum}`,
-                    email: ""
-                });
+        const init = async () => {
+            try {
+                setLoadingConvs(true);
+                const data = await getConversations();
+                if (!isMounted) return;
+
+                const list = Array.isArray(data) ? data : [];
+                setConversations(list);
+
+                if (targetUserIdParam) {
+                    const userIdNum = Number(targetUserIdParam);
+                    const existing = list.find(c => c.utilisateur?.id === userIdNum);
+                    if (existing) {
+                        setSelectedUser(existing.utilisateur);
+                    } else {
+                        setSelectedUser({
+                            id: userIdNum,
+                            nom: searchParams.get("vendeurNom") || `Utilisateur #${userIdNum}`,
+                            email: "",
+                            role: "vendeur"
+                        });
+                    }
+                } else if (list.length > 0 && window.innerWidth >= 768) {
+                    // Sélectionner la première conversation par défaut sur grand écran
+                    setSelectedUser(list[0].utilisateur);
+                }
+            } catch (err) {
+                console.error("Erreur chargement conversations :", err);
+            } finally {
+                if (isMounted) setLoadingConvs(false);
             }
-        }
+        };
+
+        init();
 
         if (targetOffreIdParam) {
             getOffreById(targetOffreIdParam)
-                .then(setOffreContext)
+                .then(res => {
+                    if (isMounted) setOffreContext(res);
+                })
                 .catch(console.error);
         }
-    }, [targetUserIdParam, targetOffreIdParam, conversations]);
 
-    // 3. Charger les messages quand un utilisateur est sélectionné
+        return () => {
+            isMounted = false;
+        };
+    }, [targetUserIdParam, targetOffreIdParam]);
+
+    // 2. Charger les messages quand un utilisateur est sélectionné (basé sur son ID unique)
+    const selectedUserId = selectedUser?.id;
+
     useEffect(() => {
-        if (!selectedUser) return;
+        if (!selectedUserId) {
+            setMessages([]);
+            return;
+        }
+
+        let isMounted = true;
 
         const loadMessages = async () => {
             try {
                 setLoadingMsgs(true);
-                const msgs = await getMessagesAvecUser(selectedUser.id);
-                setMessages(msgs || []);
-                await marquerConversationLue(selectedUser.id);
-                fetchConvs();
+                const msgs = await getMessagesAvecUser(selectedUserId);
+                if (isMounted) {
+                    setMessages(Array.isArray(msgs) ? msgs : []);
+                }
+                
+                // Marquer comme lus
+                await marquerConversationLue(selectedUserId);
+
+                // Mettre à jour localement les badges 'non_lus' sans provoquer de boucle
+                if (isMounted) {
+                    setConversations(prev =>
+                        prev.map(c =>
+                            c.utilisateur?.id === selectedUserId ? { ...c, non_lus: 0 } : c
+                        )
+                    );
+                }
             } catch (err) {
                 console.error("Erreur chargement messages :", err);
+                if (isMounted) {
+                    setMessages([]);
+                }
             } finally {
-                setLoadingMsgs(false);
-                setTimeout(scrollToBottom, 100);
+                if (isMounted) {
+                    setLoadingMsgs(false);
+                    setTimeout(scrollToBottom, 80);
+                }
             }
         };
 
         loadMessages();
-    }, [selectedUser]);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [selectedUserId]);
 
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // 3. Sélectionner manuellement une conversation
+    const handleSelectConversation = (partner) => {
+        if (!partner || selectedUser?.id === partner.id) return;
+        setSelectedUser(partner);
+    };
 
     // 4. Envoi de message
     const handleSendMessage = async (e) => {
@@ -127,10 +172,35 @@ export default function Messagerie() {
                 destinataire_id: selectedUser.id,
                 contenu: text,
                 date_envoi: new Date().toISOString(),
+                offre: offreContext,
             };
 
             setMessages((prev) => [...prev, newMsgObj]);
-            fetchConvs();
+
+            // Mettre à jour dynamiquement la liste des conversations
+            setConversations((prev) => {
+                const existingIdx = prev.findIndex(c => c.utilisateur?.id === selectedUser.id);
+                if (existingIdx >= 0) {
+                    const updated = [...prev];
+                    updated[existingIdx] = {
+                        ...updated[existingIdx],
+                        dernier_message: text,
+                        date_envoi: new Date().toISOString(),
+                    };
+                    const [item] = updated.splice(existingIdx, 1);
+                    return [item, ...updated];
+                } else {
+                    return [
+                        {
+                            utilisateur: selectedUser,
+                            dernier_message: text,
+                            date_envoi: new Date().toISOString(),
+                            non_lus: 0,
+                        },
+                        ...prev,
+                    ];
+                }
+            });
         } catch (err) {
             console.error("Erreur envoi message :", err);
             setNouveauMessage(text);
@@ -139,9 +209,8 @@ export default function Messagerie() {
         }
     };
 
-    const handleLogout = async () => {
-        await logoutUser();
-        navigate("/");
+    const handleLogout = () => {
+        confirmLogout();
     };
 
     const dashboardLink = user?.role === "admin" ? "/admin" : user?.role === "acheteur" ? "/acheteur" : "/vendeur";
@@ -151,7 +220,7 @@ export default function Messagerie() {
         <div className="flex h-screen bg-[#f8f9fc] font-sans text-gray-800 overflow-hidden">
 
             {/* ===== SIDEBAR ===== */}
-            <aside className="w-[240px] bg-white border-r border-gray-100 flex-col justify-between hidden md:flex shrink-0">
+            <aside className="w-[240px] bg-white border-r border-gray-100 flex flex-col justify-between shrink-0 h-full hidden md:flex">
                 <div>
                     {/* Logo SenAgri */}
                     <div className="px-6 pt-6 pb-8">
@@ -159,7 +228,9 @@ export default function Messagerie() {
                             <FaLeaf className="text-[#138040] text-[26px]" />
                             <div>
                                 <p className="text-[18px] font-extrabold text-[#138040] leading-none tracking-tight">SenAgri</p>
-                                <p className="text-[9px] text-gray-400 font-bold mt-0.5 uppercase tracking-widest">Marché Agricole B2B</p>
+                                <p className="text-[9px] text-gray-400 font-bold mt-0.5 uppercase tracking-widest">
+                                    {user?.role === "admin" ? "Espace Administration" : "Marché Agricole B2B"}
+                                </p>
                             </div>
                         </Link>
                     </div>
@@ -196,7 +267,7 @@ export default function Messagerie() {
                                 </button>
                             </nav>
                         </div>
-                    ) : (
+                    ) : user?.role === "vendeur" ? (
                         <div className="px-4">
                             <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-[0.15em] mb-3 px-2">Tableau de bord</p>
                             <nav className="space-y-1">
@@ -241,6 +312,26 @@ export default function Messagerie() {
                                 </Link>
                             </nav>
                         </div>
+                    ) : (
+                        <div className="px-4">
+                            <p className="text-[9px] font-extrabold text-gray-400 uppercase tracking-[0.15em] mb-3 px-2">Administration</p>
+                            <nav className="space-y-1">
+                                <Link
+                                    to="/admin"
+                                    className="w-full flex items-center gap-3 text-gray-500 hover:bg-gray-50 hover:text-gray-800 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors text-left"
+                                >
+                                    <FaThLarge className="text-gray-400 text-[14px] shrink-0" /> Vue d'ensemble
+                                </Link>
+                                <button
+                                    className="w-full flex items-center justify-between bg-[#138040] text-white px-4 py-2.5 rounded-[12px] font-bold text-[12px] shadow-sm transition-colors text-left"
+                                >
+                                    <span className="flex items-center gap-3">
+                                        <FaRegCommentDots className="text-white/80 text-[14px] shrink-0" /> Messagerie
+                                    </span>
+                                    <span className="w-2 h-2 bg-white rounded-full"></span>
+                                </button>
+                            </nav>
+                        </div>
                     )}
                 </div>
 
@@ -254,7 +345,7 @@ export default function Messagerie() {
                     </Link>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 text-[#c0392b] hover:bg-red-50 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors text-left"
+                        className="w-full flex items-center gap-3 text-[#c0392b] hover:bg-red-50 px-4 py-2.5 rounded-[12px] font-bold text-[12px] transition-colors text-left cursor-pointer"
                     >
                         <FaSignOutAlt className="text-[#c0392b] text-[14px] shrink-0" /> Déconnexion
                     </button>
@@ -350,6 +441,7 @@ export default function Messagerie() {
                                     </div>
                                 ) : (
                                     conversations.map((conv) => {
+                                        if (!conv?.utilisateur) return null;
                                         const isSelected = selectedUser?.id === conv.utilisateur.id;
                                         const partnerRole = conv.utilisateur.role || (user?.role === "acheteur" ? "vendeur" : "acheteur");
                                         const isPartnerSeller = partnerRole === "vendeur";
@@ -357,7 +449,7 @@ export default function Messagerie() {
                                         return (
                                             <div
                                                 key={conv.utilisateur.id}
-                                                onClick={() => setSelectedUser(conv.utilisateur)}
+                                                onClick={() => handleSelectConversation(conv.utilisateur)}
                                                 className={`p-4 cursor-pointer transition-all flex items-center gap-3 hover:bg-[#f0faf5] ${
                                                     isSelected ? "bg-[#f0faf5] border-l-4 border-[#138040]" : ""
                                                 }`}
@@ -456,7 +548,8 @@ export default function Messagerie() {
                                     {/* Zone des Messages avec Différenciation Acheteur / Vendeur */}
                                     <div className="flex-grow p-4 overflow-y-auto space-y-4 bg-[#f8f9fc]">
                                         {loadingMsgs ? (
-                                            <div className="text-center py-10 text-xs text-gray-400">
+                                            <div className="text-center py-12 text-xs text-gray-400">
+                                                <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#138040] border-t-transparent mx-auto mb-2"></div>
                                                 Chargement des messages...
                                             </div>
                                         ) : messages.length === 0 ? (
@@ -525,7 +618,7 @@ export default function Messagerie() {
                                                         {/* Heure et accusé de lecture */}
                                                         <div className={`flex items-center gap-1.5 mt-1 px-1 text-[9px] text-gray-400 font-medium ${isMe ? "justify-end" : "justify-start"}`}>
                                                             <span>
-                                                                {new Date(msg.date_envoi || msg.created_at).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
+                                                                {new Date(msg.date_envoi || msg.created_at || Date.now()).toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' })}
                                                             </span>
                                                             {isMe && (
                                                                 <FaCheckDouble className={`text-[9px] ${msg.lu ? "text-[#138040]" : "text-gray-300"}`} />
@@ -550,7 +643,7 @@ export default function Messagerie() {
                                         <button
                                             type="submit"
                                             disabled={!nouveauMessage.trim() || sending}
-                                            className="py-3 px-5 bg-[#138040] hover:bg-[#0e6530] text-white font-extrabold rounded-[12px] text-[12px] transition shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="py-3 px-5 bg-[#138040] hover:bg-[#0e6530] text-white font-extrabold rounded-[12px] text-[12px] transition shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                         >
                                             <FaPaperPlane className="text-[11px]" />
                                             <span className="hidden sm:inline">Envoyer</span>

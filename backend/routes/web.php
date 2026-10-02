@@ -8,7 +8,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route de secours pour servir les fichiers médias de storage/app/public sous Windows
+// Route pour servir les fichiers médias de storage/app/public
 Route::get('/storage/{path}', function ($path) {
     $filePath = storage_path('app/public/' . $path);
 
@@ -16,7 +16,13 @@ Route::get('/storage/{path}', function ($path) {
         abort(404);
     }
 
-    return response()->file($filePath);
+    $mimeType = File::mimeType($filePath) ?: 'application/octet-stream';
+
+    return response()->file($filePath, [
+        'Content-Type' => $mimeType,
+        'Access-Control-Allow-Origin' => '*',
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
 })->where('path', '.*');
 
 Route::get('/paiement/success', [PaiementController::class, 'success']);

@@ -4,11 +4,10 @@ import { useAuth } from "../../hooks/useAuth";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isVendeur, isAdmin, logoutUser } = useAuth();
+  const { user, isAuthenticated, isVendeur, isAdmin, confirmLogout } = useAuth();
 
-  const handleLogout = async () => {
-    await logoutUser();
-    navigate("/");
+  const handleLogout = () => {
+    confirmLogout();
   };
 
   const homeLink = isAuthenticated

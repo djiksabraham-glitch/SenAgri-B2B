@@ -12,7 +12,7 @@ import {
 
 export default function CreerOffre() {
     const navigate = useNavigate();
-    const { user, logoutUser } = useAuth();
+    const { user, confirmLogout } = useAuth();
 
     const [categories, setCategories] = useState([]);
     const [loadingCategories, setLoadingCategories] = useState(true);
@@ -127,9 +127,8 @@ export default function CreerOffre() {
         }
     };
 
-    const handleLogout = async () => {
-        await logoutUser();
-        navigate("/");
+    const handleLogout = () => {
+        confirmLogout();
     };
 
     const getAvatarUrl = () => {

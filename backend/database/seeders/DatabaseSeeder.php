@@ -18,14 +18,17 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::create([
-            'nom' => 'MIN Diamniadio',
-            'email' => 'mindiamniadio@gmail.com',
-            'password' => Hash::make('password123'),
-            'telephone' => '779843456',
-            'adresse' => 'Dakar',
-            'role' => 'admin',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'mindiamniadio@gmail.com'],
+            [
+                'nom' => 'MIN Diamniadio',
+                'password' => Hash::make('password123'),
+                'telephone' => '772000101',
+                'adresse' => 'Diamniadio',
+                'role' => 'admin',
+                'est_actif' => true,
+            ]
+        );
 
     }
 }

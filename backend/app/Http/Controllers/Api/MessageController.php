@@ -62,6 +62,10 @@ class MessageController extends Controller
                     ? $dernier->destinataire
                     : $dernier->expediteur;
 
+                if (!$interlocuteur) {
+                    return null;
+                }
+
                 return [
 
                     'utilisateur' => [
@@ -88,6 +92,7 @@ class MessageController extends Controller
                 ];
 
             })
+            ->filter()
             ->values();
 
         return response()->json([

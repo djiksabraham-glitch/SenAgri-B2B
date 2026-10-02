@@ -1,29 +1,9 @@
 import { Link } from "react-router-dom";
-const getImageUrl = (img) => {
-    if (!img) return "https://placehold.co/600x400?text=SenAgri";
+import { getImageUrl } from "../../utils/imageUrl";
 
-    if (typeof img === "object" && img.url) {
-        return img.url;
-    }
-
-    const path = typeof img === "object" ? (img.chemin_fichier || img.url) : img;
-
-    if (!path || typeof path !== "string") return "https://placehold.co/600x400?text=SenAgri";
-
-    if (path.startsWith("http://") || path.startsWith("https://")) {
-        return path;
-    }
-
-    let cleanPath = path.replace(/^\//, "").replace(/^public\//, "");
-
-    if (cleanPath.startsWith("storage/")) {
-        return `http://127.0.0.1:8000/${cleanPath}`;
-    }
-
-    return `http://127.0.0.1:8000/storage/${cleanPath}`;
-};
 
 export default function OffreCard({ offre }) {
+
     if (!offre) return null;
 
     const images = offre.images || [];
@@ -92,11 +72,12 @@ export default function OffreCard({ offre }) {
                         </p>
                     </div>
 
-                    <button className="bg-green-600 hover:bg-green-700 text-white font-medium text-sm px-4 py-2 rounded-xl transition-colors shadow-sm" lin>
-                        <Link to={`/offres/${offre.id}`}>
+                    <Link
+                        to={`/offres/${offre.id}`}
+                        className="bg-green-600 hover:bg-green-700 text-white font-medium text-sm px-4 py-2 rounded-xl transition-colors shadow-sm inline-flex items-center justify-center"
+                    >
                         Voir
-                        </Link>
-                    </button>
+                    </Link>
 
                 </div>
             </div>

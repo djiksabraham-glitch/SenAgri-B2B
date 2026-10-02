@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function Footer() {
     return (
         <footer className="bg-gray-900 text-white">
@@ -31,39 +33,39 @@ export default function Footer() {
                         <ul className="space-y-3 text-gray-400">
 
                             <li>
-                                <a
-                                    href="/"
+                                <Link
+                                    to="/"
                                     className="transition hover:text-white"
                                 >
                                     Accueil
-                                </a>
+                                </Link>
                             </li>
 
                             <li>
-                                <a
-                                    href="/offres"
+                                <Link
+                                    to="/offres"
                                     className="transition hover:text-white"
                                 >
                                     Offres
-                                </a>
+                                </Link>
                             </li>
 
                             <li>
-                                <a
-                                    href="/connexion"
+                                <Link
+                                    to="/login"
                                     className="transition hover:text-white"
                                 >
                                     Connexion
-                                </a>
+                                </Link>
                             </li>
 
                             <li>
-                                <a
-                                    href="/inscription"
+                                <Link
+                                    to="/register"
                                     className="transition hover:text-white"
                                 >
                                     Inscription
-                                </a>
+                                </Link>
                             </li>
 
                         </ul>

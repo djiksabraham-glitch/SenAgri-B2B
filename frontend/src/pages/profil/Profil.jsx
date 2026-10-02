@@ -10,9 +10,11 @@ import {
     FaCog, FaSignOutAlt, FaBell, FaArrowLeft, FaSearch,
 } from "react-icons/fa";
 
+import { getImageUrl } from "../../utils/imageUrl";
+
 export default function Profil() {
     const navigate = useNavigate();
-    const { user, updateUser, logoutUser } = useAuth();
+    const { user, updateUser, confirmLogout } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -31,11 +33,7 @@ export default function Profil() {
 
     const getFormattedPhotoUrl = (url) => {
         if (!url) return null;
-        if (url.startsWith("http://") || url.startsWith("https://")) return url;
-        const clean = url.replace(/^\//, "").replace(/^public\//, "");
-        return clean.startsWith("storage/")
-            ? `http://127.0.0.1:8000/${clean}`
-            : `http://127.0.0.1:8000/storage/${clean}`;
+        return getImageUrl(url);
     };
 
     const fetchProfilData = async () => {
@@ -128,9 +126,8 @@ export default function Profil() {
         }
     };
 
-    const handleLogout = async () => {
-        await logoutUser();
-        navigate("/");
+    const handleLogout = () => {
+        confirmLogout();
     };
 
     const dashboardLink = user?.role === "admin" ? "/admin" : user?.role === "acheteur" ? "/acheteur" : "/vendeur";

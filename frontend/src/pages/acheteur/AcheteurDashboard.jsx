@@ -4,6 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { getOffres, getCategories } from "../../services/offreService";
 import { getMesCommandes, creerCommande, downloadFacture, updateStatutCommande } from "../../services/commandeService";
 import { payerCommande } from "../../services/paiementService";
+import { getImageUrl as resolveImageUrl } from "../../utils/imageUrl";
 import {
     FaLeaf, FaStore, FaShoppingBag, FaClock, FaCheckCircle, FaSearch,
     FaFilePdf, FaBox, FaCreditCard, FaComments, FaExclamationCircle,
@@ -13,7 +14,7 @@ import {
 } from "react-icons/fa";
 
 export default function AcheteurDashboard() {
-    const { user, logoutUser } = useAuth();
+    const { user, confirmLogout } = useAuth();
     const navigate = useNavigate();
 
     // Onglet actif : "offres" (Catalogue disponible) ou "commandes" (Mes Achats)
@@ -77,15 +78,7 @@ export default function AcheteurDashboard() {
 
     // Helper pour construire les URL d'images
     const getImageUrl = (img) => {
-        if (!img) return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80";
-        if (typeof img === "object" && img.url) return img.url;
-        const path = typeof img === "object" ? (img.chemin_fichier || "") : img;
-        if (!path) return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80";
-        if (path.startsWith("http://") || path.startsWith("https://")) return path;
-        const clean = path.replace(/^\//, "").replace(/^public\//, "");
-        return clean.startsWith("storage/")
-            ? `http://127.0.0.1:8000/${clean}`
-            : `http://127.0.0.1:8000/storage/${clean}`;
+        return resolveImageUrl(img, "SenAgri");
     };
 
     // Filtrage des offres
@@ -195,9 +188,8 @@ export default function AcheteurDashboard() {
         }
     };
 
-    const handleLogout = async () => {
-        await logoutUser();
-        navigate("/");
+    const handleLogout = () => {
+        confirmLogout();
     };
 
     const getStatusBadge = (statut) => {
@@ -317,7 +309,7 @@ export default function AcheteurDashboard() {
                         </button>
                         <div className="flex items-center gap-3">
                             <div className="text-right hidden sm:block">
-                                <p className="text-[13px] font-bold text-gray-900 leading-none">{user?.nom || "Elga Sow"}</p>
+                                <p className="text-[13px] font-bold text-gray-900 leading-none">{user?.nom || "Acheteur"}</p>
                                 <p className="text-[10px] font-bold text-gray-400 mt-0.5">Acheteur B2B / Grossiste</p>
                             </div>
                             <img
@@ -339,7 +331,7 @@ export default function AcheteurDashboard() {
                                 ESPACE ACHETEUR / CLIENT B2B
                             </span>
                             <h1 className="text-[30px] font-black tracking-tight mb-2">
-                                Bienvenue, {user?.nom || "Elga Sow"} 👋
+                                Bienvenue, {user?.nom || "Acheteur"} 👋
                             </h1>
                             <p className="text-white/80 text-[13px] font-medium max-w-2xl leading-relaxed">
                                 Explorez les récoltes disponibles directement auprès des producteurs et passez vos commandes en toute sécurité.
