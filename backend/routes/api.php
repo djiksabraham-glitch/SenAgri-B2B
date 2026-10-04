@@ -39,14 +39,15 @@ Route::get('/storage/{path}', function ($path) {
 Route::post(
     'paiement/callback',
     [PaiementController::class, 'callback']
-);
+)->middleware('throttle:30,1');
 
 Route::prefix('auth')->group(function () {
 
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
 
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login')->middleware('throttle:login');
 
+    // Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:forgot-password');
 
 });
 
@@ -96,8 +97,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Conversation avec un utilisateur
     Route::get('/messages/{user}', [MessageController::class, 'conversation']);
 
-    // Envoyer un message
-    Route::post('/messages', [MessageController::class, 'store']);
+    // Envoyer un message (limite anti-spam)
+    Route::post('/messages', [MessageController::class, 'store'])->middleware('throttle:messages');
 
     // Marquer une conversation comme lue
     Route::put('/messages/{user}/read', [MessageController::class, 'markAsRead']);
@@ -145,7 +146,7 @@ Route::middleware(['auth:sanctum', 'acheteur'])->group(function () {
 
     Route::post('/commandes', [CommandeController::class, 'store']);
 
-    Route::post('/paiements/{commande}', [PaiementController::class, 'payer']);
+    Route::post('/paiements/{commande}', [PaiementController::class, 'payer'])->middleware('throttle:paiement');
 
 });
 
