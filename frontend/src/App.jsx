@@ -4,6 +4,8 @@ import Offres from "./pages/offres/Offres";
 import OffreDetails from "./pages/offres/OffreDetails";
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
+import ConditionsGenerales from "./pages/legal/ConditionsGenerales";
+import PolitiqueConfidentialite from "./pages/legal/PolitiqueConfidentialite";
 
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import GuestOnlyRoute from "./components/auth/GuestOnlyRoute";
@@ -25,6 +27,10 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
       </Route>
+
+      {/* Pages légales — accessibles à tous */}
+      <Route path="/conditions-generales" element={<ConditionsGenerales />} />
+      <Route path="/politique-confidentialite" element={<PolitiqueConfidentialite />} />
 
       {/* Détail d'une offre */}
       <Route path="/offres/:id" element={<OffreDetails />} />

@@ -1,24 +1,27 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { getProfil, updateProfil, uploadPhotoProfil, deletePhotoProfil } from "../../services/profileService";
+import { getProfil, updateProfil, uploadPhotoProfil, deletePhotoProfil, deleteAccount } from "../../services/profileService";
 import {
     FaLeaf, FaUser, FaCamera, FaTrashAlt, FaCheckCircle, FaExclamationTriangle,
     FaEnvelope, FaPhone, FaMapMarkerAlt, FaShieldAlt, FaSave, FaUserCheck,
     FaChartLine, FaTags, FaBox, FaShoppingBag, FaHistory, FaUsers,
     FaStore, FaShoppingCart, FaRegCommentDots, FaChartBar,
-    FaCog, FaSignOutAlt, FaBell, FaArrowLeft, FaSearch,
+    FaCog, FaSignOutAlt, FaBell, FaArrowLeft, FaSearch, FaTimes, FaFileAlt,
 } from "react-icons/fa";
 
 import { getImageUrl } from "../../utils/imageUrl";
 
 export default function Profil() {
     const navigate = useNavigate();
-    const { user, updateUser, confirmLogout } = useAuth();
+    const { user, updateUser, confirmLogout, logoutUser } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteConfirmationInput, setDeleteConfirmationInput] = useState("");
 
     // Form fields
     const [nom, setNom] = useState("");
@@ -26,6 +29,7 @@ export default function Profil() {
     const [telephone, setTelephone] = useState("");
     const [adresse, setAdresse] = useState("");
     const [photoUrl, setPhotoUrl] = useState(null);
+    const [cguDate, setCguDate] = useState(null);
 
     // Feedback messages
     const [succesMsg, setSuccesMsg] = useState("");
@@ -44,6 +48,7 @@ export default function Profil() {
             setEmail(data.email || user?.email || "");
             setTelephone(data.telephone || user?.telephone || "");
             setAdresse(data.adresse || user?.adresse || "");
+            setCguDate(data.cgu_acceptees_le || user?.cgu_acceptees_le || null);
             const pUrl = data.photo?.url || user?.photo_url || user?.photo?.url;
             setPhotoUrl(pUrl ? getFormattedPhotoUrl(pUrl) : null);
         } catch (err) {
@@ -53,6 +58,7 @@ export default function Profil() {
                 setEmail(user.email || "");
                 setTelephone(user.telephone || "");
                 setAdresse(user.adresse || "");
+                setCguDate(user.cgu_acceptees_le || null);
                 const pUrl = user.photo_url || user.photo?.url;
                 setPhotoUrl(pUrl ? getFormattedPhotoUrl(pUrl) : null);
             }
@@ -128,6 +134,40 @@ export default function Profil() {
 
     const handleLogout = () => {
         confirmLogout();
+    };
+
+    const handleOpenDeleteModal = () => {
+        setDeleteConfirmationInput("");
+        setShowDeleteModal(true);
+    };
+
+    const handleCloseDeleteModal = () => {
+        if (!deletingAccount) {
+            setShowDeleteModal(false);
+            setDeleteConfirmationInput("");
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (deleteConfirmationInput.trim() !== "SUPPRIMER") {
+            setErreurMsg("Veuillez saisir exactement 'SUPPRIMER' pour confirmer la suppression définitive de votre compte.");
+            return;
+        }
+
+        setDeletingAccount(true);
+        setErreurMsg("");
+        try {
+            await deleteAccount();
+            setShowDeleteModal(false);
+            await logoutUser();
+            navigate("/login");
+        } catch (err) {
+            console.error("Erreur suppression compte :", err);
+            setErreurMsg(err.response?.data?.message || "Impossible de supprimer votre compte. Veuillez réessayer ultérieurement.");
+            setShowDeleteModal(false);
+        } finally {
+            setDeletingAccount(false);
+        }
     };
 
     const dashboardLink = user?.role === "admin" ? "/admin" : user?.role === "acheteur" ? "/acheteur" : "/vendeur";
@@ -572,7 +612,66 @@ export default function Profil() {
                                                 </span>
                                             </div>
 
-                                        
+                                            <div className="flex justify-between items-center py-2.5 border-b border-gray-50">
+                                                <span className="text-gray-500 font-semibold">Consentement CGU :</span>
+                                                <span className="font-bold text-emerald-600 flex items-center gap-1">
+                                                    <FaUserCheck className="text-[11px]" />
+                                                    {cguDate ? new Date(cguDate).toLocaleDateString('fr-FR') : "Accepté"}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex justify-between items-center py-2.5">
+                                                <span className="text-gray-500 font-semibold">Protection données :</span>
+                                                <span className="font-bold text-[11px] text-[#138040] bg-[#e4f5ed] px-2 py-0.5 rounded-md">
+                                                    Loi 2008-12 & CDP
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Carte Protection des Données & Suppression */}
+                                    <div className="bg-white rounded-[18px] border border-gray-100 shadow-sm p-6 space-y-4">
+                                        <div className="flex items-center gap-3 pb-3 border-b border-gray-50">
+                                            <div className="w-10 h-10 rounded-[12px] bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+                                                <FaShieldAlt />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-extrabold text-gray-900 text-[14px]">Vos Données (CDP)</h4>
+                                                <p className="text-[11px] text-gray-400 font-medium">Droits & Confidentialité</p>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-[11px] text-gray-600 leading-relaxed">
+                                            Conformément à la <strong>Loi n° 2008-12</strong> du 25 janvier 2008, vous disposez d'un droit d'accès, de rectification et de suppression de vos données.
+                                        </p>
+
+                                        <div className="pt-1 flex flex-col gap-2 border-t border-gray-50">
+                                            <Link
+                                                to="/conditions-generales"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-[11px] font-bold text-[#138040] hover:text-[#0e6530] flex items-center gap-2 hover:underline"
+                                            >
+                                                <FaFileAlt className="text-gray-400 text-[10px]" /> Consulter les CGU
+                                            </Link>
+                                            <Link
+                                                to="/politique-confidentialite"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-[11px] font-bold text-[#138040] hover:text-[#0e6530] flex items-center gap-2 hover:underline"
+                                            >
+                                                <FaShieldAlt className="text-gray-400 text-[10px]" /> Politique de Confidentialité
+                                            </Link>
+                                        </div>
+
+                                        <div className="pt-3 border-t border-gray-100">
+                                            <button
+                                                type="button"
+                                                onClick={handleOpenDeleteModal}
+                                                className="w-full py-2.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 font-bold text-[11px] rounded-xl border border-red-200 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                            >
+                                                <FaTrashAlt className="text-[10px]" /> Demander la suppression du compte
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -614,6 +713,97 @@ export default function Profil() {
                     )}
                 </div>
             </main>
+
+            {/* Modal de Confirmation de Suppression de Compte (Loi 2008-12 & CDP) */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-7 border border-gray-100 relative">
+                        <button
+                            type="button"
+                            onClick={handleCloseDeleteModal}
+                            disabled={deletingAccount}
+                            className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                        >
+                            <FaTimes />
+                        </button>
+
+                        <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center text-2xl mx-auto mb-4 border border-red-100 shadow-sm">
+                            <FaTrashAlt />
+                        </div>
+
+                        <h3 className="text-xl font-extrabold text-gray-900 text-center tracking-tight">
+                            Suppression Définitive du Compte
+                        </h3>
+
+                        <p className="text-xs text-center text-gray-500 mt-1 mb-4">
+                            Conformément à la <strong>Loi n° 2008-12</strong> & directives <strong>CDP</strong> (Sénégal)
+                        </p>
+
+                        <div className="bg-red-50/70 border border-red-100 rounded-2xl p-4 mb-5 text-left space-y-2">
+                            <p className="text-xs font-bold text-red-900 flex items-center gap-1.5">
+                                <FaExclamationTriangle className="text-red-600 text-sm shrink-0" />
+                                Attention : Cette action est irréversible !
+                            </p>
+                            <p className="text-[11px] text-red-800 leading-relaxed">
+                                La suppression de votre compte entraînera l'effacement définitif de toutes vos données personnelles :
+                            </p>
+                            <ul className="text-[11px] text-red-700 list-disc pl-5 space-y-0.5">
+                                <li>Votre profil (nom, email, téléphone, localisation, photo)</li>
+                                <li>Vos offres publiées et produits enregistrés</li>
+                                <li>Vos commandes et historiques de transactions</li>
+                                <li>Vos messages et conversations avec les partenaires</li>
+                                <li>Vos sessions et identifiants de connexion</li>
+                            </ul>
+                        </div>
+
+                        <div className="mb-5 text-left">
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                Pour confirmer, veuillez saisir <span className="text-red-600 font-mono font-black">SUPPRIMER</span> ci-dessous :
+                            </label>
+                            <input
+                                type="text"
+                                value={deleteConfirmationInput}
+                                onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+                                placeholder="Tapez SUPPRIMER"
+                                disabled={deletingAccount}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-xs font-bold tracking-wider outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all uppercase"
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={handleCloseDeleteModal}
+                                disabled={deletingAccount}
+                                className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDeleteAccount}
+                                disabled={deletingAccount || deleteConfirmationInput.trim() !== "SUPPRIMER"}
+                                className={`flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                    deleteConfirmationInput.trim() !== "SUPPRIMER" || deletingAccount
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : ""
+                                }`}
+                            >
+                                {deletingAccount ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent"></div>
+                                        Suppression...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaTrashAlt className="text-xs" /> Confirmer la suppression
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -6,7 +6,7 @@ export default function Footer() {
 
             <div className="mx-auto max-w-7xl px-6 py-12">
 
-                <div className="grid gap-10 md:grid-cols-4">
+                <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-5">
 
                     {/* Présentation */}
                     <div className="md:col-span-2">
@@ -72,6 +72,37 @@ export default function Footer() {
 
                     </div>
 
+                    {/* Légal & Données Personnelles */}
+                    <div>
+
+                        <h3 className="mb-4 font-semibold">
+                            Légal & Données
+                        </h3>
+
+                        <ul className="space-y-3 text-gray-400">
+
+                            <li>
+                                <Link
+                                    to="/conditions-generales"
+                                    className="transition hover:text-white"
+                                >
+                                    Conditions Générales (CGU)
+                                </Link>
+                            </li>
+
+                            <li>
+                                <Link
+                                    to="/politique-confidentialite"
+                                    className="transition hover:text-white"
+                                >
+                                    Protection des Données
+                                </Link>
+                            </li>
+
+                        </ul>
+
+                    </div>
+
                     {/* Contact */}
                     <div>
 
@@ -109,7 +140,7 @@ export default function Footer() {
                         </p>
 
                         <p>
-                            Plateforme agricole B2B du Sénégal
+                            🔐 Plateforme conforme à la Loi n° 2008-12 & directives CDP (Sénégal)
                         </p>
 
                     </div>

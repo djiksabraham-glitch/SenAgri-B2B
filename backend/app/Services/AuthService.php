@@ -20,6 +20,7 @@ class AuthService
             'telephone' => $data['telephone'],
             'adresse' => $data['adresse'],
             'role' => $data['role'],
+            'cgu_acceptees_le' => now(),
         ]);
 
         $token = $user->createToken('SenAgrii')->plainTextToken;

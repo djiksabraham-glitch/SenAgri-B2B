@@ -84,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profil/photo', [ProfileController::class, 'uploadPhoto']);
 
     Route::delete('/profil/photo', [ProfileController::class, 'destroyPhoto']);
+    Route::delete('/profil/account', [ProfileController::class, 'deleteAccount']);
 
     Route::get('/notifications', [NotificationController::class, 'index']);
 

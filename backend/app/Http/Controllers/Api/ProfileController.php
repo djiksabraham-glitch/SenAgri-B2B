@@ -7,6 +7,7 @@ use App\Http\Requests\StorePhotoProfilRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\PhotoProfilResource;
 use App\Models\PhotoProfil;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use OpenApi\Attributes as OA;
 
@@ -45,6 +46,7 @@ class ProfileController extends Controller
                 'adresse' => $user->adresse,
                 'role' => $user->role,
                 'est_actif' => $user->est_actif,
+                'cgu_acceptees_le' => $user->cgu_acceptees_le,
                 'photo' => $user->photoProfil
                     ? new PhotoProfilResource($user->photoProfil)
                     : null,
@@ -205,6 +207,38 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Photo supprimée avec succès.'
+        ]);
+    }
+
+    #[OA\Delete(
+        path: "/profil/account",
+        summary: "Supprimer le compte utilisateur",
+        description: "Supprime définitivement le compte de l'utilisateur connecté, ainsi que toutes ses données personnelles conformément à la Loi n° 2008-12 du 25 janvier 2008 sur la protection des données à caractère personnel.",
+        tags: ["Profil"],
+        security: [["sanctum" => []]]
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "Compte supprimé avec succès"
+    )]
+    public function deleteAccount(Request $request)
+    {
+        $user = auth()->user();
+
+        // Supprimer la photo de profil si elle existe
+        if ($user->photoProfil) {
+            Storage::disk('public')->delete($user->photoProfil->url);
+            $user->photoProfil->delete();
+        }
+
+        // Révoquer tous les tokens d'accès
+        $user->tokens()->delete();
+
+        // Supprimer le compte utilisateur (cascade sur offres, commandes, messages, etc.)
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Votre compte et toutes vos données personnelles ont été supprimés avec succès.'
         ]);
     }
 }

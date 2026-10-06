@@ -56,6 +56,12 @@ use OpenApi\Attributes as OA;
             example: true
         ),
         new OA\Property(
+            property: "cgu_acceptees_le",
+            type: "string",
+            format: "date-time",
+            nullable: true
+        ),
+        new OA\Property(
             property: "email_verified_at",
             type: "string",
             format: "date-time",
@@ -91,6 +97,7 @@ class User extends Authenticatable
         'adresse',
         'est_actif',
         'role',
+        'cgu_acceptees_le',
     ];
 
     /**
@@ -114,6 +121,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'est_actif' => 'boolean',
+            'cgu_acceptees_le' => 'datetime',
         ];
     }
 

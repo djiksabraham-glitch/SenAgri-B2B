@@ -17,6 +17,7 @@ export default function Register() {
         role: "acheteur", // default role
         password: "",
         password_confirmation: "",
+        cgu_acceptees: false,
     });
 
     const [loading, setLoading] = useState(false);
@@ -29,6 +30,15 @@ export default function Register() {
         setFormData((prev) => ({ ...prev, [name]: value }));
         
         // Clear field error on edit
+        if (erreursChamps[name]) {
+            setErreursChamps((prev) => ({ ...prev, [name]: null }));
+        }
+    };
+
+    const handleCheckboxChange = (e) => {
+        const { name, checked } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: checked }));
+        
         if (erreursChamps[name]) {
             setErreursChamps((prev) => ({ ...prev, [name]: null }));
         }
@@ -48,6 +58,12 @@ export default function Register() {
         // Basic client-side validation
         if (formData.password !== formData.password_confirmation) {
             setErreursChamps({ password_confirmation: ["Les mots de passe ne correspondent pas."] });
+            setLoading(false);
+            return;
+        }
+
+        if (!formData.cgu_acceptees) {
+            setErreursChamps({ cgu_acceptees: ["Vous devez accepter les conditions générales d'utilisation et la politique de confidentialité pour continuer."] });
             setLoading(false);
             return;
         }
@@ -320,6 +336,48 @@ export default function Register() {
                                     <p className="text-xs text-red-500 mt-1 font-medium">{erreursChamps.password_confirmation[0]}</p>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Consentement : CGU et Politique de confidentialité (Loi 2008-12 & CDP) */}
+                        <div className={`p-4 rounded-2xl border transition-all ${erreursChamps.cgu_acceptees ? "border-red-300 bg-red-50/40" : "border-green-200 bg-green-50/30"}`}>
+                            <label className="flex items-start gap-3 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    name="cgu_acceptees"
+                                    checked={formData.cgu_acceptees}
+                                    onChange={handleCheckboxChange}
+                                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer accent-green-600 shrink-0"
+                                />
+                                <span className="text-xs sm:text-sm text-gray-700 leading-snug">
+                                    J'accepte les{" "}
+                                    <Link
+                                        to="/conditions-generales"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-bold text-green-700 hover:text-green-900 underline underline-offset-2"
+                                    >
+                                        conditions générales d'utilisation
+                                    </Link>
+                                    {" "}et la{" "}
+                                    <Link
+                                        to="/politique-confidentialite"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-bold text-green-700 hover:text-green-900 underline underline-offset-2"
+                                    >
+                                        politique de confidentialité
+                                    </Link>
+                                    . <span className="text-red-500 font-bold">*</span>
+                                </span>
+                            </label>
+                            {erreursChamps.cgu_acceptees && (
+                                <p className="text-xs text-red-500 mt-2 ml-7 font-medium">
+                                    {erreursChamps.cgu_acceptees[0]}
+                                </p>
+                            )}
+                            <p className="text-[11px] text-gray-500 mt-2 ml-7">
+                                🔐 Vos données sont protégées conformément à la <strong>Loi n° 2008-12</strong> du Sénégal et aux directives de la <strong>CDP</strong>.
+                            </p>
                         </div>
 
                         {/* Bouton de soumission */}

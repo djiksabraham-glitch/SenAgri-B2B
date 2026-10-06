@@ -56,3 +56,17 @@ export const deletePhotoProfil = async () => {
         throw error;
     }
 };
+
+/**
+ * Supprimer définitivement le compte utilisateur.
+ * Conformément à la Loi n° 2008-12 du 25 janvier 2008.
+ */
+export const deleteAccount = async () => {
+    try {
+        const response = await api.delete("/profil/account");
+        return response.data;
+    } catch (error) {
+        console.error("Erreur suppression compte :", error);
+        throw error;
+    }
+};

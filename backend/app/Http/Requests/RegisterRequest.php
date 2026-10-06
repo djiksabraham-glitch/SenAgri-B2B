@@ -25,8 +25,18 @@ class RegisterRequest extends FormRequest
 
             'adresse' => ['required', 'string'],
 
-            'role' => ['required', 'in:acheteur,vendeur']
+            'role' => ['required', 'in:acheteur,vendeur'],
 
+            'cgu_acceptees' => ['required', 'accepted'],
+
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'cgu_acceptees.required' => 'Vous devez accepter les conditions générales d\'utilisation.',
+            'cgu_acceptees.accepted' => 'Vous devez accepter les conditions générales d\'utilisation et la politique de confidentialité pour créer un compte.',
         ];
     }
 }

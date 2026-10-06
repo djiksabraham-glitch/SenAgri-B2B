@@ -54,6 +54,7 @@ class RateLimitingTest extends TestCase
             'telephone' => '771234567',
             'adresse' => 'Dakar',
             'role' => 'acheteur',
+            'cgu_acceptees' => true,
         ];
 
         // 5 premières tentatives
