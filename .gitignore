@@ -1,0 +1,15 @@
+# Environnement Docker (contient les secrets)
+.env
+.env.local
+.env.*.local
+
+# Dépendances
+node_modules/
+vendor/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
